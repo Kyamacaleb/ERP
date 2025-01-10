@@ -1,0 +1,47 @@
+body {
+    background: linear-gradient(to bottom right, #e0f7fa, #ffffff); /* Light blue to white gradient */
+}
+
+.card {
+    border: none; /* Remove default card border */
+    border-radius: 20px; /* More rounded corners */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Deeper shadow for a floating effect */
+    transition: transform 0.2s; /* Smooth transition for hover effect */
+}
+
+.card:hover {
+    transform: translateY(-5px); /* Slight lift on hover */
+}
+
+.btn-primary {
+    background-color: royalblue; /* Royal blue color for buttons */
+    border: none; /* Remove border */
+    transition: background-color 0.3s; /* Smooth transition */
+}
+
+.btn-primary:hover {
+    background-color: darkblue; /* Darker shade on hover */
+}
+
+.card-title {
+    font-family: 'Helvetica Neue', sans-serif; /* Modern font */
+    font-size: 2rem; /* Larger font size for the title */
+    color: royalblue; /* Royal blue color for the title */
+}
+
+.card-body {
+    padding: 2.5rem; /* More padding for a spacious feel */
+}
+
+.form-control:focus {
+    border-color: royalblue; /* Change border color on focus */
+    box-shadow: 0 0 5px rgba(65, 105, 225, 0.5); /* Subtle shadow on focus */
+}
+
+.input-group-text {
+    background-color: #f8f9fa; /* Light background for input group */
+}
+
+h5 {
+    color: #6c757d; /* Subtle color for the subheading */
+}

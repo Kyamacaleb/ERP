@@ -1,0 +1,22 @@
+
+spring:
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/erp
+    username: postgres
+    password: 8235
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+
+logging:
+  level:
+    org.springframework.security: DEBUG  # Enable DEBUG level logging for security-related information
