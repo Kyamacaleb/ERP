@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -32,23 +33,25 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
+                .requestMatchers("/api/employees/login", "/error").permitAll() // Allow access to login endpoint
                 .requestMatchers("/uploads/**").permitAll() // Allow public access to uploaded files
                 .requestMatchers("/favicon.ico", "/error", "/uploads/**", "/css/**", "/js/**", "/").permitAll() // Public resources
-                .requestMatchers("/api/employees/login" , "/error").permitAll() // Allow access to the login endpoint
-                .requestMatchers("/api/employees/**").hasAnyRole("ADMIN","EMPLOYEE")
                 .requestMatchers("/api/employees/me").authenticated() // Ensure this endpoint is authenticated
-                .requestMatchers("/api/contacts/**").hasAnyRole("ADMIN","EMPLOYEE")
+                .requestMatchers("/api/employees/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                .requestMatchers("/api/contacts/**").hasAnyRole("ADMIN", "EMPLOYEE")
                 .requestMatchers("/api/leaves/**").hasAnyRole("ADMIN", "EMPLOYEE")
                 .requestMatchers("/api/tasks/**").hasAnyRole("ADMIN", "EMPLOYEE")
                 .requestMatchers("/api/finances/**").hasAnyRole("ADMIN", "EMPLOYEE")
                 .requestMatchers("/api/notifications/**").hasAnyRole("ADMIN", "EMPLOYEE")
-                .requestMatchers("/employee-dashboard", "/admin-dashboard").permitAll()// Ensure this is secured for EMPLOYEE role
+                .requestMatchers("/employee-dashboard", "/admin-dashboard").permitAll() // Public pages
                 .requestMatchers("/admin-dashboard").hasRole("ADMIN")
-                .anyRequest().authenticated()
+                // Specific access to profile pictures by employee or admin
+                .requestMatchers("/api/employees/{id}/profile-picture").hasAnyRole("EMPLOYEE", "ADMIN")
+                .anyRequest().authenticated() // Catch-all for any other requests
                 .and()
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build(); // Return the built HttpSecurity object
+        return http.build(); // Return the configured SecurityFilterChain
     }
 
     @Bean
@@ -62,6 +65,6 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Define the BCryptPasswordEncoder bean
+        return new BCryptPasswordEncoder(); // Define BCryptPasswordEncoder for password hashing
     }
 }

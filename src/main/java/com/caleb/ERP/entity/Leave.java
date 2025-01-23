@@ -41,7 +41,7 @@ public class Leave {
     private String dateRequested; // Format: YYYY-MM-DD
 
     @Column(name = "status", nullable = false) // Column name for status
-    private String status; // Pending, Approved, Rejected
+    private String status; // Pending, Approved, Rejected, Recalled
 
     @Column(name = "days_allocated", nullable = false) // Column name for days allocated
     private int daysAllocated; // Total days allocated for the leave type
@@ -61,5 +61,6 @@ public class Leave {
 
     @Column(name = "compassionate_leave_balance", nullable = false)
     private int compassionateLeaveBalance = 21; // Default balance for compassionate leave
+
 
 }

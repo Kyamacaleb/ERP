@@ -157,4 +157,9 @@ public class EmployeeService implements UserDetailsService {
                 .roles(role.replace("ROLE_", "")) // Remove "ROLE_" prefix
                 .build();
     }
+
+    public Employee saveEmployee(Employee employee) {
+        return employeeRepository.save(employee);
+    }
+
 }

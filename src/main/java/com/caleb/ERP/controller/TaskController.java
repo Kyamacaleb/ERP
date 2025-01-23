@@ -35,22 +35,22 @@ public class TaskController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<Task> createTask(@RequestBody Task task) {
-        // Set the assignedBy and assignedTo fields based on the current user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String assignedByEmail = authentication.getName(); // Assuming the email is used as the username
+        String assignedByEmail = authentication.getName();
         Employee assignedBy = employeeService.getEmployeeByEmail(assignedByEmail)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        // Set the assignedBy field
-        task.setAssignedBy(assignedBy);
+        task.setAssignedBy(assignedBy); // Set the assignedBy field directly with Employee object
 
-        // You will need to set the assignedTo field based on the request body or logic
-        // For example, if you want to assign it to a specific employee:
-        // task.setAssignedTo(employeeService.getEmployeeById(assignedToId).orElseThrow(() -> new RuntimeException("Employee not found")));
+        // Assuming assignedToId is passed in the request body
+        Employee assignedTo = employeeService.getEmployeeById(task.getAssignedTo().getEmployeeId())
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+        task.setAssignedTo(assignedTo); // Set the assignedTo field directly with Employee object
 
         Task createdTask = taskService.createTask(task);
         return ResponseEntity.status(201).body(createdTask);
     }
+
 
     // Get a task by ID
     @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
@@ -62,7 +62,7 @@ public class TaskController {
     }
 
     // Update a task
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
     @PutMapping("/{taskId}")
     public ResponseEntity<Task> updateTask(@PathVariable UUID taskId, @RequestBody Task taskDetails) {
         Task updatedTask = taskService.updateTask(taskId, taskDetails);
@@ -90,16 +90,6 @@ public class TaskController {
         return ResponseEntity.ok(updatedTask);
     }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
-    @PostMapping("/{taskId}/comments")
-    public ResponseEntity<Void> addComment(@PathVariable UUID taskId, @RequestBody Map<String, String> commentBody) {
-        String comment = commentBody.get("comment");
-        if (comment == null || comment.isEmpty()) {
-            return ResponseEntity.badRequest().build(); // Return 400 Bad Request if comment is not provided
-        }
-        taskService.addComment(taskId, comment);
-        return ResponseEntity.ok().build();
-    }
     // Get task history for the current employee
     @GetMapping("/me/history")
     @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
@@ -107,4 +97,5 @@ public class TaskController {
         List<Task> tasks = taskService.getTasksByCurrentEmployee(); // Implement this method in TaskService
         return new ResponseEntity<>(tasks, HttpStatus.OK);
     }
+
 }

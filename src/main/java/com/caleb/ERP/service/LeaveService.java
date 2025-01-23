@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -47,6 +49,9 @@ public class LeaveService {
         leaveRequest.setDaysTaken((int) daysBetween); // Set the number of days taken
         leaveRequest.setDaysAllocated(21); // Set the allocated days (constant value)
 
+        // Set the date requested to the current date
+        leaveRequest.setDateRequested(LocalDate.now().toString()); // Set to current date
+
         // 5. Set initial status
         leaveRequest.setStatus("Pending");
 
@@ -71,55 +76,54 @@ public class LeaveService {
         return leaveRepository.findById(id).orElseThrow(() -> new RuntimeException("Leave not found"));
     }
 
-    public void approveLeave(UUID id) {
+    public void approveLeave(UUID id, String approverName) {
         Leave leave = getLeaveById(id);
 
-        // Check if the leave request is already approved or rejected
+        // Validate the leave status
         if ("Approved".equals(leave.getStatus())) {
             throw new IllegalArgumentException("This leave request has already been approved.");
         }
         if ("Rejected".equals(leave.getStatus())) {
             throw new IllegalArgumentException("This leave request has already been rejected.");
         }
-        Employee employee = leave.getEmployee(); // Get the employee associated with the leave request
 
-        // Check if the employee has enough leave balance
-        if (leave.getDaysTaken() > employee.getSickLeaveBalance() && leave.getLeaveType().equals("Sick")) {
-            throw new IllegalArgumentException("Insufficient sick leave balance.");
-        } else if (leave.getDaysTaken() > employee.getVacationLeaveBalance() && leave.getLeaveType().equals("Vacation")) {
-            throw new IllegalArgumentException("Insufficient vacation leave balance.");
-        } else if (leave.getDaysTaken() > employee.getPaternityLeaveBalance() && leave.getLeaveType().equals("Paternity/Maternity")) {
-            throw new IllegalArgumentException("Insufficient paternity leave balance.");
-        } else if (leave.getDaysTaken() > employee.getCompassionateLeaveBalance() && leave.getLeaveType().equals("Compassionate")) {
-            throw new IllegalArgumentException("Insufficient compassionate leave balance.");
-        }
+        Employee employee = leave.getEmployee();
 
-        // Deduct the leave days from the employee's balance
+        // Check leave balance
         switch (leave.getLeaveType()) {
             case "Sick":
+                if (leave.getDaysTaken() > employee.getSickLeaveBalance()) {
+                    throw new IllegalArgumentException("Insufficient sick leave balance.");
+                }
                 employee.setSickLeaveBalance(employee.getSickLeaveBalance() - leave.getDaysTaken());
                 break;
             case "Vacation":
+                if (leave.getDaysTaken() > employee.getVacationLeaveBalance()) {
+                    throw new IllegalArgumentException("Insufficient vacation leave balance.");
+                }
                 employee.setVacationLeaveBalance(employee.getVacationLeaveBalance() - leave.getDaysTaken());
                 break;
             case "Paternity/Maternity":
+                if (leave.getDaysTaken() > employee.getPaternityLeaveBalance()) {
+                    throw new IllegalArgumentException("Insufficient paternity leave balance.");
+                }
                 employee.setPaternityLeaveBalance(employee.getPaternityLeaveBalance() - leave.getDaysTaken());
                 break;
             case "Compassionate":
+                if (leave.getDaysTaken() > employee.getCompassionateLeaveBalance()) {
+                    throw new IllegalArgumentException("Insufficient compassionate leave balance.");
+                }
                 employee.setCompassionateLeaveBalance(employee.getCompassionateLeaveBalance() - leave.getDaysTaken());
                 break;
             default:
                 throw new IllegalArgumentException("Invalid leave type.");
         }
 
-        // Set the approver name to the current authenticated user
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        leave.setApproverName(authentication.getName()); // Set the approver name
-
         leave.setStatus("Approved");
+        leave.setApproverName(approverName);
         leaveRepository.save(leave);
 
-        // Update the employee's leave balance in the database
+        // Update employee balances in the database
         employeeService.updateEmployee(employee.getEmployeeId(), employee);
     }
 
@@ -150,27 +154,67 @@ public class LeaveService {
         return leaveRepository.findByEmployee(employee);
     }
 
-    public Leave updateLeaveRequest(UUID id, Leave leaveRequest) {
-        Leave existingLeave = getLeaveById(id);
+    // Filter leave requests
+    public List<Leave> filterLeaves(String status, String type) {
+        if (status != null && type != null) {
+            return leaveRepository.findByStatusAndLeaveType(status, type);
+        } else if (status != null) {
+            return leaveRepository.findByStatus(status);
+        } else if (type != null) {
+            return leaveRepository.findByLeaveType(type);
+        }
+        return leaveRepository.findAll();
+    }
 
-        // Update the existing leave request with new details
+    // View leave statistics
+    public Map<String, Object> getLeaveStatistics() {
+        Map<String, Object> stats = new HashMap<>();
+        long totalRequests = leaveRepository.count();
+        long approvedCount = leaveRepository.countByStatus("Approved");
+        stats.put("totalRequests", totalRequests);
+        stats.put("approvalRate", (double) approvedCount / totalRequests * 100);
+        return stats;
+    }
+
+
+    public Leave updateLeaveRequest(UUID id, Leave leaveRequest) {
+        // Fetch the leave request by ID
+        Leave existingLeave = leaveRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Leave request not found"));
+
+        // Check if the leave status is "Pending"
+        if (!"Pending".equals(existingLeave.getStatus())) {
+            throw new IllegalArgumentException("Leave request can only be updated if the status is 'Pending'.");
+        }
+
+        // Update the leave details
         existingLeave.setLeaveType(leaveRequest.getLeaveType());
         existingLeave.setStartDate(leaveRequest.getStartDate());
         existingLeave.setEndDate(leaveRequest.getEndDate());
         existingLeave.setReason(leaveRequest.getReason());
-        existingLeave.setStatus("Pending"); // Set status to pending for the new request
-
-        // Calculate the number of leave days for the updated request
-        LocalDate startDate = LocalDate.parse(leaveRequest.getStartDate());
-        LocalDate endDate = LocalDate.parse(leaveRequest.getEndDate());
-        long daysBetween = ChronoUnit.DAYS.between(startDate, endDate) + 1; // Include the end date
-        existingLeave.setDaysTaken((int) daysBetween);
-        existingLeave.setDaysAllocated(21); // Set the allocated days (constant value)
-
-        // Set the date requested to the current date
-        existingLeave.setDateRequested(LocalDate.now().toString()); // Set to current date or leaveRequest.getDateRequested() if provided
 
         // Save the updated leave request
         return leaveRepository.save(existingLeave);
+    }
+    public List<Leave> getAllLeaveHistory() {
+        // Fetch all leaves that are not pending
+        return leaveRepository.findByStatusNot("Pending");
+    }
+    public void recallLeave(UUID id) {
+        Leave leave = getLeaveById(id);
+
+        // Check if the leave request is already recalled
+        if ("Recalled".equals(leave.getStatus())) {
+            throw new IllegalArgumentException("This leave request has already been recalled.");
+        }
+
+        // Check if the leave request is approved
+        if (!"Approved".equals(leave.getStatus())) {
+            throw new IllegalArgumentException("Only approved leave requests can be recalled.");
+        }
+
+        // Update the status to "Recalled"
+        leave.setStatus("Recalled");
+        leaveRepository.save(leave);
     }
 }

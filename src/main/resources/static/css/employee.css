@@ -1,7 +1,13 @@
+/* Default light mode */
 body {
-    background-color: #f8f9fa;
+    background-color: #92a3b6; /* Light gray background */
     font-family: Arial, sans-serif;
+    display: flex;
+    height: 100vh; /* Full height */
+    overflow: hidden; /* Prevent scrolling */
+    color: black;
 }
+
 .sidebar {
     height: 100vh;
     position: fixed;
@@ -11,6 +17,7 @@ body {
     background-color: #001f3f; /* Navy Blue */
     padding: 20px;
 }
+
 .sidebar a {
     color: #ffffff; /* White */
     text-decoration: none;
@@ -19,87 +26,238 @@ body {
     border-radius: 5px;
     transition: background-color 0.3s;
 }
+
 .sidebar a:hover {
     background-color: #007bff; /* Royal Blue */
 }
-.sidebar .logout {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
+
+.sidebar a.active {
+    background-color: #0056b3; /* Darker shade of Royal Blue */
+    font-weight: bold;
 }
+
+.top-bar {
+    background-color: #003366; /* Lighter shade of Navy Blue */
+    color: #ffffff; /* White text */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 10px 20px;
+    position: fixed;
+    width: calc(100% - 250px);
+    left: 250px;
+    top: 0;
+    z-index: 200;
+}
+
 .content {
     margin-left: 250px;
+    margin-top: 60px; /* Adjust for top bar height */
     padding: 20px;
+    flex: 1; /* Allow content to grow and fill remaining space */
+    overflow-y: auto; /* Enable scrolling if content overflows */
 }
+
 .section-title {
     color: #001f3f; /* Navy Blue */
     margin-bottom: 20px;
 }
-.btn-primary {
-    background-color: #007bff; /* Royal Blue */
-    border: none;
+
+.hidden {
+    display: none;
 }
-.btn-primary:hover {
-    background-color: #0056b3; /* Darker Royal Blue */
+
+.overview-card {
+    margin-bottom: 20px;
+    background-color: #ffffff; /* White background for cards */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
-.btn-secondary {
-    background-color: #ff7f50; /* Peach */
-    border: none;
+
+.card {
+    border: none; /* Remove default card border */
 }
-.btn-secondary:hover {
-    background-color: #ff6347; /* Darker Peach */
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background-color: #121212; /* Dark background */
+    color: #ffffff; /* Light text */
 }
-.btn-success {
-    background-color: #28a745; /* Green */
-    border: none;
+
+.sidebar.dark-mode {
+    background-color: #1e1e1e; /* Darker sidebar */
+    color: #ffffff;
 }
-.btn-success:hover {
-    background-color: #218838; /* Darker Green */
+
+.sidebar.dark-mode a {
+    color: #bbbbbb; /* Adjust sidebar links */
 }
-.badge {
+
+.sidebar.dark-mode a:hover {
+    background-color: #007bff; /* Royal Blue on hover */
+}
+
+.top-bar.dark-mode {
+    background-color: #1e1e1e; /* Dark top bar */
+    color: #ffffff;
+}
+
+.content.dark-mode {
+    background-color: #1e1e1e; /* Dark content area */
+    color: #ffffff; /* Light text */
+}
+
+.content.dark-mode .overview-card {
+    background-color: #333333; /* Dark cards */
+    color: #ffffff;
+}
+
+button.dark-mode {
+    color: #ffffff;
+    background-color: #333333;
+    border-color: #444444;
+}
+
+button.dark-mode:hover {
+    background-color: #444444;
+    border-color: #555555;
+}
+
+input.dark-mode {
+    background-color: #333333;
+    color: #ffffff;
+    border-color: #444444;
+}
+
+input.dark-mode::placeholder {
+    color: #888888;
+}
+
+a.dark-mode {
+    color: #1e90ff; /* Lighter color for links in dark mode */
+}
+
+.logout.dark-mode {
+    color: red; /* Logout button stays readable */
+}
+
+/* Improved card contrast in dark mode */
+.content.dark-mode .card {
+    border: 1px solid #444444;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Scrollbar styling for dark mode */
+body.dark-mode ::-webkit-scrollbar {
+    width: 10px;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background: #444444;
     border-radius: 5px;
 }
-.badge.bg-success {
-    background-color: #28a745; /* Green */
+
+/* Contact Directory */
+.contact-directory {
+    margin-bottom: 20px;
 }
-.badge.bg-warning {
-    background-color: #ffc107; /* Yellow */
-}
-.badge.bg-danger {
-    background-color: #dc3545; /* Red */
-}
-.badge.bg-info {
-    background-color: #17a2b8; /* Cyan */
-}
-.profile-picture {
-    width: 100px;
-    height: 100px;
-    border: 2px solid #007bff; /* Royal Blue */
-}
-.modal-header {
-    background-color: #001f3f; /* Navy Blue */
-    color: white;
-}
-.modal-content {
+
+.contact-directory .contact-card {
+    background-color: #ffffff; /* White background for cards */
+    border: 1px solid #dddddd;
     border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.contact-directory .contact-card h3 {
+    margin: 0;
+    color: #001f3f; /* Navy Blue for titles */
+}
+
+.contact-directory .contact-card p {
+    margin: 5px 0;
+    color: #333333; /* Dark gray for details */
+}
+
+.contact-directory.dark-mode .contact-card {
+    background-color: #333333; /* Dark background for cards */
+    border: 1px solid #444444;
+}
+
+.contact-directory.dark-mode .contact-card h3 {
+    color: #ffffff; /* White titles in dark mode */
+}
+
+.contact-directory.dark-mode .contact-card p {
+    color: #bbbbbb; /* Light gray details in dark mode */
+}
+.hidden {
+    display: none;
+}
+
+.section {
+    padding: 20px;
 }
 .card {
-    border: 1px solid #007bff; /* Royal Blue */
-    border-radius: 10px;
+    display: block !important; /* Force display */
+}#contactsContainer {
+     display: block !important; /* Force display */
+ }.flex-container {
+      display: flex;
+      flex-wrap: wrap; /* Allow items to wrap to the next line */
+      gap: 20px; /* Space between items */
+  }
+
+.contact-card {
+    flex: 1 1 calc(30% - 20px); /* Adjust the width of each card */
+    background: #f9f9f9; /* Light background */
+    border: 1px solid #ccc; /* Border for definition */
+    border-radius: 5px; /* Rounded corners */
+    padding: 15px; /* Padding inside the card */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    transition: transform 0.2s; /* Animation for hover effect */
 }
-.card-title {
-    color: #001f3f; /* Navy Blue */
+
+.contact-card:hover {
+    transform: scale(1.05); /* Slightly enlarge on hover */
 }
-.card-text {
-    color: #333; /* Dark Gray */
+
+.contact-card h5 {
+    margin: 0; /* Remove default margin */
+    color: #333; /* Darker text for names */
 }
-.footer {
-    background-color: #001f3f; /* Navy Blue */
-    color: white;
-    padding: 10px;
-    text-align: center;
+
+.contact-card p {
+    margin: 0.5em 0; /* Space between paragraphs */
+    color: #666; /* Lighter text for details */
 }
-.dark-mode {
-    background-color: #212529; /* Dark Gray */
-    color: white;
+.status-badge {
+    display: inline-block; /* Make it behave like a block element */
+    padding: 0.5em 1em; /* Add some padding */
+    border-radius: 0.25rem; /* Rounded corners */
+    color: white; /* Text color */
+    text-align: center; /* Center the text */
+    font-weight: bold; /* Make the text bold */
+    cursor: pointer; /* Change cursor to pointer */
+    transition: background-color 0.3s; /* Smooth transition for hover effect */
+}
+
+.status-badge.pending {
+    background-color: yellow; /* Pending */
+}
+
+.status-badge.approved {
+    background-color: green; /* Approved */
+}
+
+.status-badge.rejected {
+    background-color: red; /* Rejected */
+}
+
+.status-badge.recalled {
+    background-color: blue; /* Recalled */
+}
+
+/* Optional: Add hover effects */
+.status-badge:hover {
+    opacity: 0.8; /* Slightly fade on hover */
 }

@@ -24,10 +24,10 @@ public class Finance {
     @Column(name = "type", nullable = false)
     private String type; // "Requisition" or "Claim"
 
-    @Column(name = "purpose", nullable = false)
+    @Column(name = "purpose") // Only for requisitions
     private String purpose; // For requisitions
 
-    @Column(name = "expense_type")
+    @Column(name = "expense_type") // Only for claims
     private String expenseType; // For claims
 
     @Column(name = "amount", nullable = false)

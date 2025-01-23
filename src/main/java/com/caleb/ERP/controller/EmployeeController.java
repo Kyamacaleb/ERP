@@ -180,7 +180,6 @@ public class EmployeeController {
 
         // Check if the image is upright
         try {
-            // Read the image metadata directly in this method
             Metadata metadata = ImageMetadataReader.readMetadata(file.getInputStream());
             ExifIFD0Directory directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
 
@@ -190,18 +189,24 @@ public class EmployeeController {
                     return ResponseEntity.badRequest().body("Image must be upright.");
                 }
             }
-        } catch (IOException | ImageProcessingException e) {
+        } catch (IOException | ImageProcessingException | MetadataException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error reading image metadata.");
-        } catch (MetadataException e) {
-            throw new RuntimeException(e);
         }
 
-        // Logic to save the file (e.g., to a local directory or cloud storage)
-        String fileName = file.getOriginalFilename();
+        // Logic to save the file
+        String uploadsDir = "src/main/resources/uploads/";
+        String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename(); // Unique file name
+        File destinationFile = new File(uploadsDir + fileName);
+
+        try {
+            file.transferTo(destinationFile); // Save the file
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving file.");
+        }
 
         // Update the employee's profile picture
         Employee employee = employeeService.getEmployeeById(id).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
-        employee.setProfilePicture(fileName); // Save the file name or path
+        employee.setProfilePicture(fileName); // Save the file name
         employeeService.updateEmployee(id, employee); // Update employee record
 
         return ResponseEntity.ok("Profile picture uploaded successfully.");
@@ -209,17 +214,19 @@ public class EmployeeController {
 
     // Change password for the current employee
     @PreAuthorize("hasRole('EMPLOYEE')")
-    @PutMapping("/me/change-password/{id}")
+    @PutMapping("/me/change-password")
     public ResponseEntity<String> changePassword(@RequestBody Map<String, String> request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         String newPassword = request.get("newPassword");
-
-        if (!employeeService.isValidPassword(newPassword)) {
-            return ResponseEntity.badRequest().body("New password does not meet complexity requirements.");
-        }
+        String currentPassword = request.get("currentPassword");
 
         Employee employee = employeeService.getEmployeeByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+
+        // Validate the current password (you may need to implement this logic)
+        if (!passwordEncoder.matches(currentPassword, employee.getPassword())) {
+            return ResponseEntity.badRequest().body("Current password is incorrect.");
+        }
 
         employee.setPassword(passwordEncoder.encode(newPassword)); // Hash the new password
         employeeService.updateEmployee(employee.getEmployeeId(), employee); // Update the employee record
@@ -227,24 +234,35 @@ public class EmployeeController {
         return ResponseEntity.ok("Password changed successfully.");
     }
 
+    // Endpoint for getting the profile picture
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('ADMIN')")
     @GetMapping("/{id}/profile-picture")
     public ResponseEntity<byte[]> getProfilePicture(@PathVariable UUID id) {
-        Employee employee = employeeService.getEmployeeById(id).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
-        String fileName = employee.getProfilePicture();
+        Employee employee = employeeService.getEmployeeById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
 
-        // Logic to load the image file from the server
-        File file = new File("src/main/resources/uploads/" + fileName);
+        String fileName = employee.getProfilePicture();
+        String uploadsDir = "src/main/resources/uploads/";
+
+        // If no profile picture is set, use the default image
+        if (fileName == null || fileName.isEmpty()) {
+            fileName = "default-profile.png"; // Default image
+        }
+
+        File file = new File(uploadsDir + fileName);
         if (!file.exists()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.notFound().build(); // Return 404 if the file does not exist
         }
 
         try {
             byte[] imageBytes = Files.readAllBytes(file.toPath());
             return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_JPEG) // Adjust based on your image type
+                    .contentType(MediaType.IMAGE_PNG) // Adjust based on your image type
                     .body(imageBytes);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
+
 }

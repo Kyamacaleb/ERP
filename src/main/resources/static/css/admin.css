@@ -1,47 +1,117 @@
 body {
-    background: linear-gradient(to bottom right, #e0f7fa, #ffffff); /* Light blue to white gradient */
+    background-color: #f0f4f8; /* Light background for contrast */
+    transition: background-color 0.3s;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 250px;
+    background-color: #003366; /* Navy blue */
+    color: white;
+    padding-top: 20px;
+    transition: width 0.3s;
+    z-index: 100;
+}
+
+.sidebar.collapsed {
+    width: 80px;
+}
+
+.sidebar a, .sidebar .nav-link {
+    color: #ffffff; /* White text */
+    padding: 15px 20px;
+    transition: background-color 0.3s;
+}
+
+.sidebar a:hover, .sidebar .nav-link:hover {
+    background-color: #00509e; /* Lighter navy on hover */
+}
+
+.content {
+    margin-left: 250px;
+    padding: 20px;
+    transition: margin-left 0.3s;
+}
+
+.content.collapsed {
+    margin-left: 80px;
+}
+
+.navbar {
+    background-color: #003366; /* Navy blue */
+}
+
+.navbar-brand, .navbar-nav .nav-link {
+    color: #ffffff; /* White text */
+}
+
+.navbar-nav .nav-link:hover {
+    color: #ffcc99; /* Peach color on hover */
+}
+
+.modal-header {
+    background-color: #00509e; /* Lighter blue */
+    color: white;
+}
+
+.dark-mode {
+    background-color: #343a40;
+    color: white;
+}
+
+.hidden {
+    display: none;
 }
 
 .card {
-    border: none; /* Remove default card border */
-    border-radius: 20px; /* More rounded corners */
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Deeper shadow for a floating effect */
-    transition: transform 0.2s; /* Smooth transition for hover effect */
+    margin-bottom: 20px;
+    border: none; /* Remove card border */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
 
-.card:hover {
-    transform: translateY(-5px); /* Slight lift on hover */
+h5, h6 {
+    color: #003366; /* Dark blue for headings */
 }
 
-.btn-primary {
-    background-color: royalblue; /* Royal blue color for buttons */
-    border: none; /* Remove border */
-    transition: background-color 0.3s; /* Smooth transition */
+.text-success {
+    color: green;
 }
 
-.btn-primary:hover {
-    background-color: darkblue; /* Darker shade on hover */
+.text-danger {
+    color: red;
+}
+.status-badge {
+    display: inline-block; /* Make it behave like a block element */
+    padding: 0.5em 1em; /* Add some padding */
+    border-radius: 0.25rem; /* Rounded corners */
+    color: white; /* Text color */
+    text-align: center; /* Center the text */
+    font-weight: bold; /* Make the text bold */
+    cursor: pointer; /* Change cursor to pointer */
+    transition: background-color 0.3s; /* Smooth transition for hover effect */
 }
 
-.card-title {
-    font-family: 'Helvetica Neue', sans-serif; /* Modern font */
-    font-size: 2rem; /* Larger font size for the title */
-    color: royalblue; /* Royal blue color for the title */
+.status-badge.pending {
+    background-color: yellow; /* Pending */
 }
 
-.card-body {
-    padding: 2.5rem; /* More padding for a spacious feel */
+.status-badge.approved {
+    background-color: green; /* Approved */
 }
 
-.form-control:focus {
-    border-color: royalblue; /* Change border color on focus */
-    box-shadow: 0 0 5px rgba(65, 105, 225, 0.5); /* Subtle shadow on focus */
+.status-badge.rejected {
+    background-color: red; /* Rejected */
 }
 
-.input-group-text {
-    background-color: #f8f9fa; /* Light background for input group */
+.status-badge.recalled {
+    background-color: blue; /* Recalled */
 }
 
-h5 {
-    color: #6c757d; /* Subtle color for the subheading */
+/* Optional: Add hover effects */
+.status-badge:hover {
+    opacity: 0.8; /* Slightly fade on hover */
 }

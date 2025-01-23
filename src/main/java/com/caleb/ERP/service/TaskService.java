@@ -2,6 +2,7 @@ package com.caleb.ERP.service;
 
 import com.caleb.ERP.entity.Employee;
 import com.caleb.ERP.entity.Task;
+import com.caleb.ERP.repository.EmployeeRepository;
 import com.caleb.ERP.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -18,9 +19,21 @@ public class TaskService {
     private TaskRepository taskRepository;
     @Autowired
     private EmployeeService employeeService;
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
 
     public List<Task> getAllTasks() {
-        return taskRepository.findAll();
+        List<Task> tasks = taskRepository.findAll();
+        for (Task task : tasks) {
+            if (task.getAssignedTo() != null) {
+                task.setAssignedToName(task.getAssignedTo().getFullName()); // Use getFullName() method
+            }
+            if (task.getAssignedBy() != null) {
+                task.setAssignedByName(task.getAssignedBy().getFullName()); // Use getFullName() method
+            }
+        }
+        return tasks;
     }
 
     public Task createTask(Task task) {
@@ -37,7 +50,6 @@ public class TaskService {
         task.setDescription(taskDetails.getDescription());
         task.setDueDate(taskDetails.getDueDate());
         task.setStatus(taskDetails.getStatus());
-        task.setComments(taskDetails.getComments());
         task.setUrgent(taskDetails.isUrgent());
         return taskRepository.save(task);
     }
@@ -53,17 +65,23 @@ public class TaskService {
         return task;
     }
 
-    public void addComment(UUID taskId, String comment) {
-        Task task = taskRepository.findById(taskId).orElseThrow();
-        task.setComments(task.getComments() + "\n" + comment); // Append new comment
-        taskRepository.save(task);
-    }
+
     public List<Task> getTasksByCurrentEmployee() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUserEmail = authentication.getName(); // Assuming the email is used as the username
+        String currentUserEmail = authentication.getName();
         Employee currentEmployee = employeeService.getEmployeeByEmail(currentUserEmail)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        return taskRepository.findByAssignedTo(currentEmployee); // You need to create this method in TaskRepository
+        List<Task> tasks = taskRepository.findByAssignedTo(currentEmployee);
+        for (Task task : tasks) {
+            if (task.getAssignedTo() != null) {
+                task.setAssignedToName(task.getAssignedTo().getFullName()); // Use getFullName() method
+            }
+            if (task.getAssignedBy() != null) {
+                task.setAssignedByName(task.getAssignedBy().getFullName()); // Use getFullName() method
+            }
+        }
+        return tasks;
     }
+
 }

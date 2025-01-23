@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -38,9 +40,13 @@ public class Task {
     @Column(name = "status", nullable = false)
     private String status; // e.g., "Not Started", "In Progress", "Completed"
 
-    @Column(name = "comments")
-    private String comments; // Comments for collaboration
-
     @Column(name = "urgent")
     private boolean urgent; // Flag for urgent tasks
+
+    // Transient fields for UI display
+    @Transient
+    private String assignedToName; // Name of the employee assigned to the task
+
+    @Transient
+    private String assignedByName; // Name of the employee who assigned the task
 }

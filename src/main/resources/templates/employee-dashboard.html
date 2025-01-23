@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,63 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="/css/employee.css"> <!-- Link to the external CSS file -->
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: Arial, sans-serif;
-            display: flex;
-            height: 100vh; /* Full height */
-            overflow: hidden; /* Prevent scrolling */
-        }
-        .sidebar {
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 100;
-            background-color: #001f3f; /* Navy Blue */
-            padding: 20px;
-        }
-        .sidebar a {
-            color: #ffffff; /* White */
-            text-decoration: none;
-            padding: 10px;
-            display: block;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        .sidebar a:hover {
-            background-color: #007bff; /* Royal Blue */
-        }
-        .top-bar {
-            background-color: #003366; /* Lighter shade of Navy Blue */
-            color: #ffffff; /* White text */
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            padding: 10px 20px;
-            position: fixed;
-            width: calc(100% - 250px);
-            left: 250px;
-            top: 0;
-            z-index: 200;
-        }
-        .content {
-            margin-left: 250px;
-            margin-top: 60px; /* Adjust for top bar height */
-            padding: 20px;
-            flex: 1; /* Allow content to grow and fill remaining space */
-            overflow-y: auto; /* Enable scrolling if content overflows */
-        }
-        .section-title {
-            color: #001f3f; /* Navy Blue */
-            margin-bottom: 20px;
-        }
-        .hidden {
-            display: none;
-        }
-        .overview-card {
-            margin-bottom: 20px;
-        }
-    </style>
 </head>
 <body>
 
@@ -78,7 +21,7 @@
         <button class="btn btn-outline-secondary me-2"><i class="fas fa-bell"></i></button>
         <div class="dropdown">
             <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fas fa-user"></i> John Doe
+                <i class="fas fa-user"></i> User Name
             </button>
             <ul class="dropdown-menu" aria-labelledby="userDropdown">
                 <li><a class="dropdown-item" href="#">View Profile</a></li>
@@ -88,7 +31,6 @@
     </div>
 </div>
 
-<!-- Sidebar -->
 <div class="sidebar">
     <h2 class="text-white">Dashboard</h2>
     <a href="#" class="d-block mb-2" onclick="showSection('overview')"><i class="fas fa-tachometer-alt"></i> Overview</a>
@@ -97,8 +39,8 @@
     <a href="#" class="d-block mb-2" onclick="showSection('taskManagement')"><i class="fas fa-tasks"></i> Task Management</a>
     <a href="#" class="d-block mb-2" onclick="showSection('financeManagement')"><i class="fas fa-money-bill-wave"></i> Finance Management</a>
     <a href="#" class="d-block mb-2" onclick="showSection('contactDirectory')"><i class="fas fa-address-book"></i> Contact Directory</a>
-    <button class="btn btn-secondary mt-3" id="toggleDarkMode">Toggle Dark Mode</button>
-    <a href="#logout" class="btn btn-danger logout mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    <button class="btn btn-secondary mt-3" id="toggleDarkMode">Dark Mode</button>
+    <a href="#" class="btn btn-danger logout mt-3" id="logoutButton"><i class="fas fa-sign-out-alt"></i> Logout</a>
 </div>
 
 <!-- Main Content -->
@@ -113,7 +55,7 @@
                             <div class="card overview-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Total Tasks</h5>
-                                    <p class="card-text"><strong>10</strong></p>
+                                    <p class="card-text"><strong>0</strong></p>
                                 </div>
                             </div>
                         </div>
@@ -121,7 +63,7 @@
                             <div class="card overview-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Pending Leave Requests</h5>
-                                    <p class="card-text"><strong>2</strong></p>
+                                    <p class="card-text"><strong>0</strong></p>
                                 </div>
                             </div>
                         </div>
@@ -129,7 +71,7 @@
                             <div class="card overview-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Finance Records</h5>
-                                    <p class="card-text"><strong>5</strong></p>
+                                    <p class="card-text"><strong>0</strong></p>
                                 </div>
                             </div>
                         </div>
@@ -147,15 +89,15 @@
                             <div class="card">
                                 <div class="card-body">
                                     <h5 class="card-title">Employee Data</h5>
-                                    <p><strong>First Name:</strong> John</p>
-                                    <p><strong>Last Name:</strong> Doe</p>
-                                    <p><strong>Email:</strong> john.doe@example.com</p>
-                                    <p><strong>Phone Number:</strong> (123) 456-7890</p>
-                                    <p><strong>Department:</strong> IT</p>
-                                    <p><strong>Date of Joining:</strong> 2020-01-01</p>
-                                    <p><strong>Emergency Contact Name:</strong> Jane Doe</p>
-                                    <p><strong>Emergency Contact Phone:</strong> (123) 456-7891</p>
-                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">Edit Profile</button>
+                                    <p><strong>First Name:</strong> <span id="firstName"></span></p>
+                                    <p><strong>Last Name:</strong> <span id="lastName"></span></p>
+                                    <p><strong>Email:</strong> <span id="email"></span></p>
+                                    <p><strong>Phone Number:</strong> <span id="phone"></span></p>
+                                    <p><strong>Department:</strong> <span id="department"></span></p>
+                                    <p><strong>Date of Joining:</strong> <span id="dateOfJoining"></span></p>
+                                    <p><strong>Emergency Contact Name:</strong> <span id="emergencyContactName"></span></p>
+                                    <p><strong>Emergency Contact Phone:</strong> <span id="emergencyContactPhone"></span></p>
+                                    <button id="editProfileButton" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">Edit Profile</button>
                                     <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Change Password</button>
                                 </div>
                             </div>
@@ -163,7 +105,8 @@
                         <div class="col-md-4">
                             <div class="card">
                                 <div class="card-body text-center">
-                                    <img src="profile.jpg" class="rounded-circle profile-picture" alt="Profile Picture" style="width: 150px; height: 150px;">
+                                    <!-- Profile Picture -->
+                                    <img id="profilePicture" src="/uploads/default-profile.png" alt="Profile Picture" class="img-fluid rounded-circle" style="width: 150px; height: 150px; margin: 10px auto;">
                                     <button class="btn btn-success mt-3" data-bs-toggle="modal" data-bs-target="#uploadProfilePictureModal">Upload Profile Picture</button>
                                 </div>
                             </div>
@@ -173,11 +116,99 @@
             </div>
         </div>
 
+        <!-- Edit Profile Modal -->
+        <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editProfileForm">
+                            <div class="mb-3">
+                                <label for="editFirstName" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id ="editFirstName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editLastName" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="editLastName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editPhone" class="form-label">Phone Number</label>
+                                <input type="text" class="form-control" id="editPhone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editDepartment" class="form-label">Department</label>
+                                <input type="text" class="form-control" id="editDepartment" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editEmergencyContactName" class="form-label">Emergency Contact Name</label>
+                                <input type="text" class="form-control" id="editEmergencyContactName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editEmergencyContactPhone" class="form-label">Emergency Contact Phone</label>
+                                <input type="text" class="form-control" id="editEmergencyContactPhone" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password Modal -->
+        <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="changePasswordForm">
+                            <div class="mb-3">
+                                <label for="currentPassword" class="form-label">Current Password</label>
+                                <input type="password" class="form-control" id="currentPassword" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="newPassword" class="form-label">New Password</label>
+                                <input type="password" class="form-control" id="newPassword" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Change Password</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Profile Picture Modal -->
+        <div class="modal fade" id="uploadProfilePictureModal" tabindex="-1" aria-labelledby="uploadProfilePictureModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="uploadProfilePictureModalLabel">Upload Profile Picture</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="file" id="profilePictureUpload" accept="image/*">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <!-- Leave Management Section -->
         <div class="dashboard-section hidden" id="leaveManagement">
             <div class="card">
                 <div class="card-body">
                     <h2 class="section-title">Leave Management</h2>
                     <div class="row">
+                        <!-- Leave Request Section -->
                         <div class="col-md-4">
                             <div class="card">
                                 <div class="card-body">
@@ -187,160 +218,191 @@
                                             <label for="leaveType" class="form-label">Leave Type</label>
                                             <select class="form-select" id="leaveType" required>
                                                 <option value="">Select Leave Type</option>
-                                                <option value="sick">Sick Leave</option>
-                                                <option value="vacation">Vacation Leave</option>
-                                                <option value="paternity">Paternity Leave</option>
-                                                <option value="compassionate">Compassionate Leave</option>
+                                                <option value="Sick">Sick Leave</option>
+                                                <option value="Vacation">Vacation Leave</option>
+                                                <option value="Paternity/Maternity">Paternity Leave</option>
+                                                <option value="Compassionate">Compassionate Leave</option>
                                             </select>
+                                            <div class="text-danger" id="leaveTypeError"></div>
                                         </div>
                                         <div class="mb-3">
                                             <label for="startDate" class="form-label">Start Date</label>
                                             <input type="date" class="form-control" id="startDate" required>
+                                            <div class="text-danger" id="startDateError"></div>
                                         </div>
                                         <div class="mb-3">
                                             <label for="endDate" class="form-label">End Date</label>
                                             <input type="date" class="form-control" id="endDate" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="reason" class="form-label">Reason</label>
-                                            <textarea class="form-control" id="reason" rows="3" required></textarea>
-                                        </div>
-                                        <button type="submit" class="btn btn-primary">Submit Leave Request</button>
-                                    </form>
+                                            <div class="text-danger" id="endDateError"></div>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Leave Request Status</h5>
-                                    <table class="table table-striped">
-                                        <thead>
-                                        <tr>
-                                            <th>Leave Type</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        <tr>
-                                            <td>Sick Leave</td>
-                                            <td><span class="badge bg-warning">Pending</span></td>
-                                            <td>
-                                                <button class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editLeaveRequestModal">Update Leave</button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Vacation Leave</td>
-                                            <td><span class="badge bg-success">Approved</span></td>
-                                            <td>
-                                                <button class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editLeaveRequestModal">Update Leave</button>
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
+                                <div class="mb-3">
+                                    <label for="reason" class="form-label">Reason</label>
+                                    <textarea class="form-control" id="reason" rows="3" required></textarea>
+                                    <div class="text-danger" id="reasonError"></div>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Leave Balances</h5>
-                                    <p><strong>Sick Leave:</strong> 5 days</p>
-                                    <p><strong>Vacation Leave:</strong> 10 days</p>
-                                    <p><strong>Paternity Leave:</strong> 2 days</p>
-                                </div>
+                                <button type="submit" class="btn btn-primary">Submit Leave Request</button>
+                                </form>
                             </div>
                         </div>
                     </div>
-                    <div class="card mt-3">
-                        <div class="card-body">
-                            <h5 class="card-title">Leave History</h5>
-                            <table class="table table-striped">
-                                <thead>
-                                <tr>
-                                    <th>Leave Type</th>
-                                    <th>Start Date</th>
-                                    <th>End Date</th>
-                                    <th>Status</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr>
-                                    <td>Sick Leave</td>
-                                    <td>2023-10-01</td>
-                                    <td>2023-10-05</td>
-                                    <td><span class="badge bg-success">Approved</span></td>
-                                </tr>
-                                <tr>
-                                    <td>Vacation Leave</td>
-                                    <td>2023-11-01</td>
-                                    <td>2023-11-10</td>
-                                    <td><span class="badge bg-success">Approved</span></td>
-                                </tr>
-                                </tbody>
-                            </table>
+
+                    <!-- Leave Balances Section -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Leave Balances</h5>
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>Leave Type</th>
+                                        <th>Days Allocated</th>
+                                        <th>Leave Balance</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="leaveBalanceBody">
+                                    <tr>
+                                        <td>Sick Leave</td>
+                                        <td>21</td>
+                                        <td id="sickLeaveBalance"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Vacation Leave</td>
+                                        <td>21</td>
+                                        <td id="vacationLeaveBalance"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Paternity Leave</td>
+                                        <td>21</td>
+                                        <td id="paternityLeaveBalance"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Compassionate Leave</td>
+                                        <td>21</td>
+                                        <td id="compassionateLeaveBalance"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Leave History Section -->
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Leave History</h5>
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th>Leave Type</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Reason</th>
+                                <th>Approver Name</th>
+                                <th>Date Requested</th>
+                                <th>Days Taken</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody id="leaveHistoryBody">
+                            <!-- Dynamic content will be populated here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
+        </div>
 
-        <div class="dashboard-section hidden" id="taskManagement">
-            <div class="card">
+<!-- Edit Leave Request Modal -->
+<div class="modal fade" id="editLeaveRequestModal" tabindex="-1" aria-labelledby="editLeaveRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editLeaveRequestModalLabel">Edit Leave Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editLeaveRequestForm">
+                    <input type="hidden" id="editLeaveId">
+                    <div class="mb-3">
+                        <label for="editLeaveType" class="form-label">Leave Type</label>
+                        <select class="form-select" id="editLeaveType" required>
+                            <option value="">Select Leave Type</option>
+                            <option value="Sick">Sick Leave</option>
+                            <option value="Vacation">Vacation Leave</option>
+                            <option value="Paternity/Maternity">Paternity Leave</option>
+                            <option value="Compassionate">Compassionate Leave</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editStartDate" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="editStartDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEndDate" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="editEndDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editReason" class="form-label">Reason</label>
+                        <textarea class="form-control" id="editReason" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Leave Request</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-section" id="taskManagement">
+    <div class="card">
+        <div class="card-body">
+            <h2 class="section-title">My Tasks</h2>
+            <div class="card mt-3" id="taskList">
                 <div class="card-body">
-                    <h2 class="section-title">Task Management</h2>
-                    <div class="row">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Task Info</h5>
-                                <p>Total Tasks: <strong>10</strong></p>
-                                <p>Pending: <strong>5</strong></p>
-                                <p>Completed: <strong>5</strong></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Task Summary</h5>
-                                <canvas id="taskStatusChart" width="400" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Task Details</h5>
-                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskDetailModal">View Task Details</button>
-                                <button class="btn btn-secondary mt-2">Update Status</button>
-                                <button class="btn btn-info mt-2">Add Comment</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card mt-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Task History</h5>
+                    <h5 class="card-title">Task List</h5>
+                    <div class="table-responsive">
                         <table class="table table-striped">
                             <thead>
                             <tr>
                                 <th>Task Name</th>
-                                <th>Status</th>
+                                <th>Assigned To</th>
+                                <th>Assigned By</th>
+                                <th>Description</th>
                                 <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Urgent</th>
+                                <th>Actions</th>
                             </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="taskTableBody">
+                            <!-- Rows will be populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3" id="taskHistory">
+                <div class="card-body">
+                    <h5 class="card-title">Task History</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
                             <tr>
-                                <td>Task 1</td>
-                                <td><span class="badge bg-success">Completed</span></td>
-                                <td>2023-10-15</td>
+                                <th>Task Name</th>
+                                <th>Assigned To</th>
+                                <th>Assigned By</th>
+                                <th>Description</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Urgent</th>
+                                <th>Completed Date</th>
                             </tr>
-                            <tr>
-                                <td>Task 2</td>
-                                <td><span class="badge bg-info">In Progress</span></td>
-                                <td>2023-10-20</td>
-                            </tr>
+                            </thead>
+                            <tbody id="taskHistoryBody">
+                            <!-- Rows will be populated dynamically -->
                             </tbody>
                         </table>
                     </div>
@@ -348,176 +410,204 @@
             </div>
         </div>
     </div>
+</div>
 
-    <div class="dashboard-section hidden" id="financeManagement">
-        <div class="card">
-            <div class="card-body">
-                <h2 class="section-title">Finance Management</h2>
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Submit Finance Record</h5>
-                                <form id="financeRecordForm">
-                                    <div class="mb-3">
-                                        <label for="financeType" class="form-label">Finance Type</label>
-                                        <input type="text" class="form-control" id="financeType" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="expenseType" class="form-label">Purpose/Expense Type</label>
-                                        <input type="text" class="form-control" id="expenseType" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="amount" class="form-label">Amount</label>
-                                        <input type="number" class="form-control" id="amount" required>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Submit Finance Record</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">View Finance Records</h5>
-                                <table class="table table-striped">
-                                    <thead>
-                                    <tr>
-                                        <th>Finance Type</th>
-                                        <th>Amount</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <td>Requisition</td>
-                                        <td>$150</td>
-                                        <td><span class="badge bg-success">Approved</span></td>
-                                        <td>
-                                            <button class="btn btn-info btn-sm">Download</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Claim</td>
-                                        <td>$300</td>
-                                        <td>
-                                            <span class="badge bg-warning">Pending</span></td>
-                                        <td>
-                                            <button class="btn btn-info btn-sm">Download</button>
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Finance History</h5>
-                                <table class="table table-striped">
-                                    <thead>
-                                    <tr>
-                                        <th>Finance Type</th>
-                                        <th>Amount</th>
-                                        <th>Date Submitted</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <td>Requisition</td>
-                                        <td>$150</td>
-                                        <td>2023-10-01</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Claim</td>
-                                        <td>$300</td>
-                                        <td>2023-09-15</td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<!-- Edit Task Modal -->
+<div class="modal" id="editTaskModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Task</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-        </div>
-    </div>
-
-    <div class="dashboard-section hidden" id="contactDirectory">
-        <div class="card">
-            <div class="card-body">
-                <h2 class="section-title">Contact Directory</h2>
-                <div class="mb-3">
-                    <label for="searchContacts"></label><input type="text" class="form-control" id="searchContacts" placeholder="Search by name, department, or phone number">
-                </div>
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <div class="card">
-                            <img src="avatar1.jpg" class="card-img-top rounded-circle" alt="Avatar" style="width: 100px; height: 100px; margin: 10px auto;">
-                            <div class="card-body text-center">
-                                <h5 class="card-title">Jane Doe</h5>
-                                <p class="card-text"><strong>Department:</strong> HR</p>
-                                <p class="card-text"><strong>Phone:</strong> (123) 456-7891</p>
-                                <p class="card-text"><strong>Email:</strong> jane.doe@example.com</p>
-                                <span class="badge bg-success">Active</span>
-                            </div>
-                        </div>
+            <div class="modal-body">
+                <form id="editTaskForm">
+                    <div class="form-group">
+                        <label for="taskName">Task Name</label>
+                        <input type="text" id="taskName" class="form-control" required>
                     </div>
-                    <!-- Add more contact cards as needed -->
-                </div>
-                <button class="btn btn-secondary mt-3" data-bs-toggle="modal" data-bs-target="#updateEmergencyContactModal">Update Emergency Contacts</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Update Emergency Contact Modal -->
-    <div class="modal fade" id="updateEmergencyContactModal" tabindex="-1" aria-labelledby="updateEmergencyContactModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="updateEmergencyContactModalLabel">Update Emergency Contacts</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="updateContactForm">
-                        <div class="mb-3">
-                            <label for="contactName" class="form-label">Contact Name</label>
-                            <input type="text" class="form-control" id="contactName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="contactRelation" class="form-label">Relation</label>
-                            <input type="text" class="form-control" id="contactRelation" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="contactPhone" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control" id="contactPhone" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                    </form>
-                </div>
+                    <div class="form-group">
+                        <label for="taskDescription">Description</label>
+                        <textarea id="taskDescription" class="form-control" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="dueDate">Due Date</label>
+                        <input type="date" id="dueDate" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="urgent">Urgent</label>
+                        <input type="checkbox" id="urgent">
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status" class="form-control">
+                            <option value="not-started">Not Started</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/js/employee.js"></script>
-<script>
-    function showSection(sectionId) {
-        const sections = document.querySelectorAll('.dashboard-section');
-        sections.forEach(section => {
-            section.classList.add('hidden');
-        });
-        const selectedSection = document.getElementById(sectionId);
-        selectedSection.classList .remove('hidden');
-        document.querySelector('.content h1').classList.add('hidden'); // Hide the main title when a section is displayed
-    }
+<!-- Task View Modal -->
+<div class="modal" id="taskViewModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" style="background-color: #ffe5b4;"> <!-- Peach color -->
+            <div class="modal-header">
+                <h5 class="modal-title">Task Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 id="viewTaskName"></h5>
+                <p><strong>Assigned To:</strong> <span id="viewAssignedTo"></span></p>
+                <p><strong>Assigned By:</strong> <span id="viewAssignedBy"></span></p>
+                <p><strong>Description:</strong> <span id="viewDescription"></span></p>
+                <p><strong>Due Date:</strong> <span id="viewDueDate"></span></p>
+                <p><strong>Status:</strong> <span id="viewStatus"></span></p>
+                <p><strong>Urgent:</strong> <span id="viewUrgent"></span></p>
+            </div>
+        </div>
+    </div>
+</div>
 
-    document.addEventListener('DOMContentLoaded', () => {
-        showSection('overview'); // Show Overview by default
-    });
-</script>
+<<div class="dashboard-section hidden" id="financeManagement">
+    <div class="card">
+        <div class="card-body">
+            <h2 class="section-title">Finance Management</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="card-title">Submit Requisition</h5>
+                    <form id="requisition-form" enctype="multipart/form-data" class="mb-4">
+                        <div class="mb-3">
+                            <label for="purpose" class="form-label">Purpose of Requisition</label>
+                            <input type="text" class="form-control" id="purpose" name="purpose" placeholder="Purpose" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Requested Amount</label>
+                            <input type="number" class="form-control" id="amount" name="amount" placeholder="Amount" required min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="dateSubmitted" class="form-label">Date of Requisition</label>
+                            <input type="date" class="form-control" id="dateSubmitted" name="dateSubmitted" required>
+                            <div id="requisitionDateError" class="text-danger"></div> <!-- Error message -->
+                        </div>
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Attach Supporting Documents</label>
+                            <input type="file" class="form-control" id="file" name="file" accept=".pdf,.doc,.docx">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Requisition</button>
+                    </form>
+                </div>
+
+                <div class="col-md-6">
+                    <h5 class="card-title">Submit Claim</h5>
+                    <form id="claim-form" enctype="multipart/form-data" class="mb-4">
+                        <div class="mb-3">
+                            <label for="expenseType" class="form-label">Type of Expense</label>
+                            <input type="text" class="form-control" id="expenseType" name="expenseType" placeholder="Expense Type" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="claimAmount" class="form-label">Reimbursement Amount</label>
+                            <input type="number" class="form-control" id="claimAmount" name="amount" placeholder="Amount" required min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="claimDateSubmitted" class="form-label">Date of Claim</label>
+                            <input type="date" class="form-control" id="claimDateSubmitted" name="dateSubmitted" required>
+                            <div id="claimDateError" class="text-danger"></div> <!-- Error message -->
+                        </div>
+                        <div class="mb-3">
+                            <label for="claimFile" class="form-label">Attach Receipts or Proof of Payment</label>
+                            <input type="file" class="form-control" id="claimFile" name="file" accept=".pdf,.doc,.docx">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Claim</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h5 class="card-title">View Finance Records</h5>
+                    <button id="fetch-finances" class="btn btn-secondary mb-2">Fetch My Finances</button>
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Finance Type</th>
+                            <th>Purpose</th>
+                            <th>Amount</th>
+                            <th>Date Submitted</th> <!-- Added Date Submitted Column -->
+                            <th>Status</th> <!-- Added Status Column -->
+                            <th>Actions</th> <!-- Added Actions Column -->
+                        </tr>
+                        </thead>
+                        <tbody id="finance-records-body">
+                        <!-- Dynamic content will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h5 class="card-title">Finance History</h5>
+                    <button id="fetch-history" class="btn btn-secondary mb-2">Fetch My History</button>
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Finance Type</th>
+                            <th>Purpose</th>
+                            <th>Amount</th>
+                            <th>Date Submitted</th>
+                            <th>Status</th> <!-- Added Status Column -->
+                            <th>Actions</th> <!-- Added Actions Column -->
+                        </tr>
+                        </thead>
+                        <tbody id="finance-history-body">
+                        <!-- Dynamic content will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+        <div class="dashboard-section hidden" id="contactDirectory">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="section-title">Contact Directory</h2>
+                        <div class="mb-3">
+                            <label for="searchContacts">Search Contacts:</label>
+                            <input type="text" class="form-control" id="searchContacts" placeholder="Search by name, department, or phone number">
+                        </div>
+                        <div id="contactsContainer" class="flex-container">
+                            <!-- Contact info will be populated here -->
+                        </div>
+                    </div>
+                 </div>
+        </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.dashboard-section');
+            sections.forEach(section => {
+                section.classList.add('hidden');
+            });
+            const selectedSection = document.getElementById(sectionId);
+            selectedSection.classList.remove('hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            showSection('overview'); // Show Overview by default
+        });
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/js/employee.js"></script>
 </body>
 </html>

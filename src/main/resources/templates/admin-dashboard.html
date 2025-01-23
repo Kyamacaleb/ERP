@@ -2,9 +2,414 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/admin.css"> <!-- Link to the external CSS file -->
 </head>
 <body>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <h2 class="text-white text-center">Admin Panel</h2>
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showSection('overview')">Overview</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showSection('employeeManagement')">Employee Management</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showSection('financeManagement')">Finance Management</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showSection('leaveManagement')">Leave Management</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showSection('taskManagement')">Task Management</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showSection('contactManagement')">Contact Management</a>
+        </li>
+        <li class="nav-item mt-auto">
+            <button class="btn btn-outline-secondary w-100" id="toggleDarkMode">Toggle Dark Mode</button>
+            <button class="btn btn-danger w-100" onclick="logout()">Logout</button>
+        </li>
+    </ul>
+</div>
+
+<!-- Top Bar -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <span class="navbar-text mr-auto">Admin Dashboard</span>
+        <span id="activeSection" class="navbar-text"></span>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="content" id="content">
+    <h1 class="text-center">Admin Dashboard</h1>
+
+    <!-- Overview Section -->
+    <div class="card hidden" id="overview">
+        <div class="card-header">
+            <h5>Overview</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Employees</h5>
+                            <p class="card-text" id="totalEmployees">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Leaves</h5>
+                            <p class="card-text" id="totalLeaves">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Finances</h5>
+                            <p class="card-text" id="totalFinances">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-danger">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Tasks</h5>
+                            <p class="card-text" id="totalTasks">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Management -->
+    <div class="card hidden" id="employeeManagement">
+        <div class="card-header">
+            <h5>Employee Management</h5>
+            <button class="btn btn-secondary float-right" onclick="showCreateEmployeeForm()">Add Employee</button>
+        </div>
+        <div class="card-body">
+            <div id="createEmployeeFormContainer" class="hidden">
+                <h6>Create Employee</h6>
+                <form id="createEmployeeForm">
+                    <div class="form-group">
+                        <label for="employeeName">First Name</label>
+                        <input type="text" class="form-control" id="employeeName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="employeeLastName">Last Name</label>
+                        <input type="text" class="form-control" id="employeeLastName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="employeeEmail">Email</label>
+                        <input type="email" class="form-control" id="employeeEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="employeePassword">Password</label>
+                        <input type="password" class="form-control" id="employeePassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="employeeRole">Role</label>
+                        <select class="form-control" id="employeeRole" required>
+                            <option value="EMPLOYEE">Employee</option>
+                            <option value="ADMIN">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="employeePhoneNumber">Phone Number</label>
+                        <input type="text" class="form-control" id="employeePhoneNumber" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="employeeDepartment">Department</label>
+                        <input type="text" class="form-control" id="employeeDepartment" required>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="createEmployee()">Create Employee</button>
+                </form>
+            </div>
+
+            <hr>
+
+            <h6>View All Employees</h6>
+            <div id="employeeList" class="mt-3">
+                <table class="table table-bordered" aria-label="Employee List">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Phone Number</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="employeeTableBody">
+                    <!-- Employee rows will be populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="financeManagement">
+        <div class="card-header">
+            <h5>Admin Finance Management</h5>
+        </div>
+        <div class="card-body">
+            <!-- Fetch All Finances -->
+            <h6>Finance Records</h6>
+            <button class="btn btn-secondary mb-3" onclick="fetchAdminFinanceRecords()">Fetch All Finances</button>
+            <div id="financeList" class="mt-3">
+                <table class="table table-bordered" aria-label="Finance Records List">
+                    <thead>
+                    <tr>
+                        <th>Finance Type</th>
+                        <th>Purpose</th>
+                        <th>Amount</th>
+                        <th>Date Submitted</th>
+                        <th>Status</th>
+                        <th>Actions</th> <!-- Added Actions Column -->
+                    </tr>
+                    </thead>
+                    <tbody id="admin-finance-records-body">
+                    <!-- Dynamic content will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <hr>
+
+            <!-- Finance History -->
+            <h6>Finance History</h6>
+            <button class="btn btn-secondary mb-3" onclick="fetchFinanceHistory()">Fetch Finance History</button>
+            <div id="financeHistoryList" class="mt-3">
+                <table class="table table-bordered" aria-label="Finance History">
+                    <thead>
+                    <tr>
+                        <th>Finance Type</th>
+                        <th>Purpose</th>
+                        <th>Amount</th>
+                        <th>Date Submitted</th>
+                        <th>Status</th>
+                        <th>Actions</th> <!-- Added Actions Column for History -->
+                    </tr>
+                    </thead>
+                    <tbody id="finance-history-body">
+                    <!-- Dynamic content will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="leaveManagement">
+        <div class="card-header">
+            <h5>Admin Leave Management</h5>
+        </div>
+        <div class="card-body">
+            <!-- Fetch Leave Requests -->
+            <h6>Leave Requests</h6>
+            <button class="btn btn-secondary mb-3" onclick="fetchLeaveRequests()">Fetch Leave Requests</button>
+            <div id="leaveList" class="mt-3">
+                <table class="table table-bordered" aria-label="Leave Requests List">
+                    <thead>
+                    <tr>
+                        <th>Employee Name</th>
+                        <th>Leave Type</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="leaveTableBody">
+                    <!-- Leave rows will be dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+            <hr>
+
+            <!-- Leave History -->
+            <h6>Leave History</h6>
+            <button class="btn btn-secondary mb-3" onclick="fetchLeaveHistory()">Fetch Leave History</button>
+            <div id="leaveHistoryList" class="mt-3">
+                <table class="table table-bordered" aria-label="Leave History">
+                    <thead>
+                    <tr>
+                        <th>Employee Name</th>
+                        <th>Leave Type</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        <th>Processed On</th>
+                    </tr>
+                    </thead>
+                    <tbody id="leaveHistoryTableBody">
+                    <!-- Approved/Rejected rows will be dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Management for Admin -->
+    <div class="card" id="taskManagement">
+        <div class="card-header">
+            <h5>Task Management</h5>
+        </div>
+        <div class="card-body">
+            <h6>View All Tasks</h6>
+            <button class="btn btn-secondary" onclick="getAllTasks()">View All Tasks</button>
+            <button class="btn btn-primary" onclick="openCreateTaskModal()">Create Task</button>
+            <div id="taskList" class="mt-3">
+                <table class="table table-bordered" aria-label="Task Records List">
+                    <thead>
+                    <tr>
+                        <th>Task Name</th>
+                        <th>Assigned To</th>
+                        <th>Assigned By</th>
+                        <th>Description</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Urgent</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="taskTableBody">
+                    <!-- Task rows will be populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <hr>
+
+            <h6>Create New Task</h6>
+            <form id="createTaskForm" style="display: none;">
+                <div class="form-group">
+                    <label for="taskName">Task Name</label>
+                    <input type="text" class="form-control" id="taskName" required>
+                </div>
+                <div class="form-group">
+                    <label for="assignedTo">Assign To</label>
+                    <select class="form-control" id="assignedTo" required>
+                        <option value="">Select an employee</option>
+                        <!-- Employee options will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea class="form-control" id="description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="dueDate">Due Date</label>
+                    <input type="date" class="form-control" id="dueDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select class="form-control" id="status" required>
+                        <option value="not_started">Not Started</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="urgent">Urgent</label>
+                    <input type="checkbox" id="urgent">
+                </div>
+                <button type="button" class="btn btn-primary" onclick="createTask()">Create Task</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Task Details -->
+    <div class="modal fade" id="taskDetailModal" tabindex="-1" role="dialog" aria-labelledby="taskDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskDetailModalLabel">Task Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Task Name:</strong> <span id="modalTaskName"></span></p>
+                    <p><strong>Description:</strong> <span id="modalDescription"></span></p>
+                    <p><strong>Assigned To:</strong> <span id="modalAssignedTo"></span></p>
+                    <p><strong>Assigned By:</strong> <span id="modalAssignedBy"></span></p>
+                    <p><strong>Due Date:</strong> <span id="modalDueDate"></span></p>
+                    <p><strong>Status:</strong> <span id="modalStatus"></span></p>
+                    <p><strong>Urgent:</strong> <span id="modalUrgent"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Contact Management -->
+    <div class="card hidden" id="contactManagement">
+        <div class="card-header">
+            <h5>Contact Management</h5>
+        </div>
+        <div class="card-body">
+            <button class="btn btn-secondary" onclick="getAllContacts()">View All Contacts</button>
+            <div class="mt-3" id="contactCardsContainer">
+                <!-- Contacts will be populated here as cards -->
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Include Bootstrap JS and jQuery -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.js"></script>
+<script src="/js/admin.js"></script>
+
+<script>
+    // Function to show the selected section
+    function showSection(sectionId) {
+        // Hide all sections
+        const sections = document.querySelectorAll('.content .card');
+        sections.forEach(section => {
+            section.classList.add('hidden');
+        });
+
+        // Show the selected section
+        const activeSection = document.getElementById(sectionId);
+        if (activeSection) {
+            activeSection.classList.remove('hidden');
+            document.getElementById('activeSection').innerText = activeSection.querySelector('.card-header h5').innerText;
+
+            // Fetch overview data if the Overview section is shown
+            if (sectionId === 'overview') {
+                fetchOverviewData(); // Fetch and display overview data
+            }
+        }
+    }
+
+    // Function to toggle dark mode
+    document.getElementById('toggleDarkMode').addEventListener('click', function() {
+        document.body.classList.toggle('bg-dark');
+        document.body.classList.toggle('text-white');
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('bg-dark');
+        sidebar.classList.toggle('bg-light');
+        sidebar.classList.toggle('text-white');
+    });
+
+    // Show the overview section by default
+    showSection('overview');
+</script>
 
 </body>
 </html>

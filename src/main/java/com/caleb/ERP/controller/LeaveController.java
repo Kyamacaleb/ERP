@@ -28,8 +28,23 @@ public class LeaveController {
     // Get all leave requests (for Admin)
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public List<Leave> getAllLeaves() {
-        return leaveService.getAllLeaves();
+    public ResponseEntity<List<Map<String, Object>>> getAllLeaves() {
+        List<Leave> leaves = leaveService.getAllLeaves();
+        List<Map<String, Object>> response = leaves.stream().map(leave -> {
+            Map<String, Object> leaveData = new HashMap<>();
+            leaveData.put("leaveId", leave.getLeaveId());
+            leaveData.put("employeeName", leave.getEmployee().getFullName()); // Get employee name directly
+            leaveData.put("leaveType", leave.getLeaveType());
+            leaveData.put("startDate", leave.getStartDate());
+            leaveData.put("endDate", leave.getEndDate());
+            leaveData.put("approverName", leave.getApproverName());
+            leaveData.put("dateRequested", leave.getDateRequested());
+            leaveData.put("status", leave.getStatus());
+            leaveData.put("daysTaken", leave.getDaysTaken());
+            return leaveData;
+        }).toList();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     // Submit a new leave request (for Employee)
@@ -46,14 +61,6 @@ public class LeaveController {
     public ResponseEntity<Leave> getLeaveById(@PathVariable UUID id) {
         Leave leave = leaveService.getLeaveById(id);
         return new ResponseEntity<>(leave, HttpStatus.OK);
-    }
-
-    // Approve a leave request (for Admin)
-    @PutMapping("/{id}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> approveLeave(@PathVariable UUID id) {
-        leaveService.approveLeave(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     // Reject a leave request (for Admin)
@@ -79,6 +86,7 @@ public class LeaveController {
         Leave updatedLeave = leaveService.updateLeaveRequest(id, leaveRequest);
         return new ResponseEntity<>(updatedLeave, HttpStatus.OK);
     }
+
     @GetMapping("/me/balance")
     @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<Map<String, Integer>> getCurrentEmployeeLeaveBalance() {
@@ -96,11 +104,65 @@ public class LeaveController {
         return new ResponseEntity<>(leaveBalance, HttpStatus.OK);
     }
 
-    // Get all leave requests for the current employee
+    // Get current employee's leave history (for Employee)
     @GetMapping("/me/history")
     @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<List<Leave>> getEmployeeLeaveHistory() {
-        List<Leave> leaves = leaveService.getLeavesByCurrentEmployee();
+        List<Leave> leaves = leaveService.getLeavesByCurrentEmployee(); // You may want to implement a separate method for history
         return new ResponseEntity<>(leaves, HttpStatus.OK);
     }
+    // Get all leave history (for Admin)
+    @GetMapping("/history")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Map<String, Object>>> getAllLeaveHistory() {
+        List<Leave> leaves = leaveService.getAllLeaveHistory();
+        List<Map<String, Object>> response = leaves.stream().map(leave -> {
+            Map<String, Object> leaveData = new HashMap<>();
+            leaveData.put("leaveId", leave.getLeaveId());
+            leaveData.put("employeeName", leave.getEmployee().getFullName()); // Get employee name directly
+            leaveData.put("leaveType", leave.getLeaveType());
+            leaveData.put("startDate", leave.getStartDate());
+            leaveData.put("endDate", leave.getEndDate());
+            leaveData.put("status", leave.getStatus());
+            leaveData.put("dateRequested", leave.getDateRequested());
+            leaveData.put("daysTaken", leave.getDaysTaken());
+            leaveData.put("approverName", leave.getApproverName());
+            return leaveData;
+        }).toList();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    // Recall a leave request (for Admin)
+    @PutMapping("/{id}/recall")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> recallLeave(@PathVariable UUID id) {
+        leaveService.recallLeave(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+    // Filter leave requests
+    @GetMapping("/filter")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Leave>> filterLeaveRequests(
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "type", required = false) String type) {
+        return new ResponseEntity<>(leaveService.filterLeaves(status, type), HttpStatus.OK);
+    }
+
+    // View leave statistics
+    @GetMapping("/statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getLeaveStatistics() {
+        return new ResponseEntity<>(leaveService.getLeaveStatistics(), HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> approveLeave(@PathVariable UUID id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String approverName = auth.getName();
+        leaveService.approveLeave(id, approverName);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+
 }

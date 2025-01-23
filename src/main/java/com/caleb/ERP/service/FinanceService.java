@@ -28,11 +28,11 @@ public class FinanceService {
         LocalDate submittedDate = LocalDate.parse(finance.getDateSubmitted());
 
         // Validate date based on type
-        if (finance.getType().equals("Requisition") && submittedDate.isBefore(LocalDate.now())) {
+        if ("Requisition".equals(finance.getType()) && submittedDate.isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Past dates are not allowed for requisitions.");
         }
 
-        if (finance.getType().equals("Claim") && submittedDate.isAfter(LocalDate.now())) {
+        if ("Claim".equals(finance.getType()) && submittedDate.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("Future dates are not allowed for claims.");
         }
 
@@ -93,7 +93,6 @@ public class FinanceService {
             throw new IllegalArgumentException("This finance record has already been rejected.");
         }
 
-        finance.setStatus("Rejected");
         finance.setFeedback(feedback);
         financeRepository.save(finance);
     }
@@ -112,5 +111,18 @@ public class FinanceService {
 
     public List<Finance> getAllFinances() {
         return financeRepository.findAll();
+    }
+    public void recallFinance(UUID financeId) {
+        Finance finance = financeRepository.findById(financeId)
+                .orElseThrow(() -> new IllegalArgumentException("Finance record not found"));
+
+        // Check if the finance record is approved before recalling
+        if (!"Approved".equals(finance.getStatus())) {
+            throw new IllegalArgumentException("Only approved records can be recalled.");
+        }
+
+        // Change the status to "Recalled"
+        finance.setStatus("Recalled");
+        financeRepository.save(finance);
     }
 }

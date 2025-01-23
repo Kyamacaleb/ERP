@@ -71,5 +71,8 @@ public class Employee {
     @Column(name = "compassionate_leave_balance", nullable = false)
     private Integer compassionateLeaveBalance = 21; // Default balance for compassionate leave
 
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
 
 }
