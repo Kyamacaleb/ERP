@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,10 +17,10 @@ public class FinanceService {
     @Autowired
     private FinanceRepository financeRepository;
 
-    // Get all finances for a specific employee
+    // Get all finances for a specific employee (excluding deleted)
     public List<Finance> getAllFinancesByEmployee(UUID employeeId) {
         return financeRepository.findAll().stream()
-                .filter(finance -> finance.getEmployee().getEmployeeId().equals(employeeId))
+                .filter(finance -> finance.getEmployee().getEmployeeId().equals(employeeId) && !finance.isDeleted())
                 .collect(Collectors.toList());
     }
 
@@ -61,9 +62,13 @@ public class FinanceService {
         return financeRepository.save(finance);
     }
 
-    // Delete a finance record
+    // Soft delete a finance record
     public void deleteFinance(UUID financeId) {
-        financeRepository.deleteById(financeId);
+        Finance finance = financeRepository.findById(financeId)
+                .orElseThrow(() -> new IllegalArgumentException("Finance record not found"));
+        finance.setDeleted(true); // Mark as deleted
+        finance.setDeletedAt(LocalDateTime.now()); // Set deletion timestamp
+        financeRepository.save(finance); // Save the updated record
     }
 
     public void approveFinance(UUID financeId, String feedback) {
@@ -94,6 +99,7 @@ public class FinanceService {
         }
 
         finance.setFeedback(feedback);
+        finance.setStatus("Rejected");
         financeRepository.save(finance);
     }
 
@@ -124,5 +130,21 @@ public class FinanceService {
         // Change the status to "Recalled"
         finance.setStatus("Recalled");
         financeRepository.save(finance);
+    }
+
+    // Get deleted finances
+    public List<Finance> getDeletedFinances() {
+        return financeRepository.findAll().stream()
+                .filter(Finance::isDeleted)
+                .collect(Collectors.toList());
+    }
+
+    // Restore a deleted finance record
+    public void restoreFinance(UUID financeId) {
+        Finance finance = financeRepository.findById(financeId)
+                .orElseThrow(() -> new IllegalArgumentException("Finance record not found"));
+        finance.setDeleted(false); // Mark as not deleted
+        finance.setDeletedAt(null); // Clear the deletion timestamp
+        financeRepository.save(finance); // Save the updated record
     }
 }

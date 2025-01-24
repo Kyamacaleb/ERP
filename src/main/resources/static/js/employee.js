@@ -104,7 +104,23 @@ function showSection(sectionId) {
 function logout() {
     console.log('Logout function called');
     localStorage.removeItem('userToken');
-    window.location.href = '/';
+    window.location.href = '/'; // Redirect to the home page or login page
+}
+
+// Ensure the logout button in the sidebar is bound correctly
+const sidebarLogoutButton = document.getElementById('sidebarLogoutButton');
+if (sidebarLogoutButton) {
+    sidebarLogoutButton.addEventListener('click', logout);
+} else {
+    console.error('Sidebar logout button not found in the DOM');
+}
+
+// Ensure the logout button in the top bar is bound correctly
+const topBarLogoutButton = document.getElementById('topBarLogoutButton');
+if (topBarLogoutButton) {
+    topBarLogoutButton.addEventListener('click', logout);
+} else {
+    console.error('Top bar logout button not found in the DOM');
 }
 
 // Ensure the logout button is bound correctly
@@ -141,6 +157,7 @@ function getAuthHeaders(isMultipart = false) {
         'X-Employee-Id': employeeId
     };
 }
+
 // Function to load personal information
 async function loadPersonalInfo() {
     const response = await fetch(`${BASE_URL}/api/employees/me`, {

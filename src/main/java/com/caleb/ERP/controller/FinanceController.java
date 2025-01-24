@@ -166,14 +166,28 @@ public class FinanceController {
         return ResponseEntity.ok(updatedFinance);
     }
 
-    // Delete a finance record (for Admin)
+    // Delete a finance record (soft delete)
     @DeleteMapping("/{financeId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteFinance(@PathVariable UUID financeId) {
         financeService.deleteFinance(financeId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent().build(); // Return 204 No Content
     }
 
+    // Get deleted finance records
+    @GetMapping("/deleted")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Finance>> getDeletedFinances() {
+        List<Finance> deletedFinances = financeService.getDeletedFinances();
+        return ResponseEntity.ok(deletedFinances);
+    }
+    // Restore a deleted finance record
+    @PatchMapping("/{financeId}/restore")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> restoreFinance(@PathVariable UUID financeId) {
+        financeService.restoreFinance(financeId);
+        return ResponseEntity.ok().build(); // Return 200 OK
+    }
     // Approve a finance record (for Admin)
     @PatchMapping("/{financeId}/approve")
     @PreAuthorize("hasRole('ADMIN')")
@@ -200,7 +214,7 @@ public class FinanceController {
 
     // Get finance history for the logged-in employee
     @GetMapping("/me/history")
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
     public ResponseEntity<List<Finance>> getEmployeeFinanceHistory() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID employeeId = employeeService.getEmployeeByEmail(email)

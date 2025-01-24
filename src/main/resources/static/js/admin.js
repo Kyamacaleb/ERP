@@ -19,6 +19,44 @@ function getAuthHeaders() {
 
 const BASE_URL = 'http://localhost:8080/api'; // Adjust the base URL as needed
 
+async function fetchOverviewData() {
+    try {
+        const [employeesResponse, leavesResponse, tasksResponse, financesResponse] = await Promise.all([
+            fetch(`${BASE_URL}/employees`, { headers: getAuthHeaders() }),
+            fetch(`${BASE_URL}/leaves`, { headers: getAuthHeaders() }),
+            fetch(`${BASE_URL}/tasks`, { headers: getAuthHeaders() }),
+            fetch(`${BASE_URL}/finances`, { headers: getAuthHeaders() })
+        ]);
+
+        if (!employeesResponse.ok) {
+            throw new Error('Failed to fetch employees');
+        }
+        if (!leavesResponse.ok) {
+            throw new Error('Failed to fetch leaves');
+        }
+        if (!tasksResponse.ok) {
+            throw new Error('Failed to fetch tasks');
+        }
+        if (!financesResponse.ok) {
+            throw new Error('Failed to fetch finances');
+        }
+
+        const employees = await employeesResponse.json();
+        const leaves = await leavesResponse.json();
+        const tasks = await tasksResponse.json();
+        const finances = await financesResponse.json();
+
+        // Update the overview section
+        document.getElementById('totalEmployees').innerText = employees.length;
+        document.getElementById('totalLeaves').innerText = leaves.length;
+        document.getElementById('totalTasks').innerText = tasks.length;
+        document.getElementById('totalFinanceRecords').innerText = finances.length;
+
+    } catch (error) {
+        console.error('Error fetching overview data:', error);
+        alert('Error fetching overview data: ' + error.message);
+    }
+}
 function showCreateEmployeeForm() {
     resetForm(); // Reset the form fields when showing the form
     const createEmployeeFormContainer = document.getElementById('createEmployeeFormContainer');
@@ -63,6 +101,7 @@ async function createEmployee() {
         resetForm(); // Reset the form after creation
         getAllEmployees(); // Refresh the employee list
         getAllContacts(); // Refresh the contact list
+        fetchOverviewData();
 
         // Hide the create employee form after successful creation
         showCreateEmployeeForm(); // This will toggle the form visibility
@@ -214,6 +253,7 @@ async function updateEmployee(empId) {
         alert('Employee updated successfully!');
         resetForm(); // Reset the form after updating
         getAllEmployees(); // Refresh the employee list
+        fetchOverviewData(); // Add this line to update the overview
     } catch (error) {
         console.error('Error updating employee:', error);
         alert('Error updating employee: ' + error.message);
@@ -318,44 +358,63 @@ async function fetchAdminFinanceRecords() {
         recordsBody.innerHTML = ''; // Clear existing rows
 
         finances.forEach(finance => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${finance.type}</td>
-                <td>${finance.purpose || finance.expenseType || '-'}</td>
-                <td>$${parseFloat(finance.amount).toFixed(2)}</td>
-                <td>${new Date(finance.dateSubmitted).toLocaleDateString()}</td>
-                <td>
-                    <span class="status-badge ${finance.status.toLowerCase()}">
-                        ${finance.status}
-                    </span>
-                </td>
-                <td>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Actions
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <button class="dropdown-item" onclick="handleAdminAction('${finance.financeId}', 'approve')">Approve</button>
-                            <button class="dropdown-item" onclick="handleAdminAction('${finance.financeId}', 'reject')">Reject</button>
-                            <button class="dropdown-item" onclick="handleAdminAction('${finance.financeId}', 'recall')">Recall</button>
-                            <button class="dropdown-item" onclick="handleAdminAction('${finance.financeId}', 'delete')">Delete</button>
-                            <button class="dropdown-item" onclick="downloadFinanceFile('${finance.financeId}')">Download</button>
-                        </div>
-                    </div>
-                </td>
-            `;
+            const row = createFinanceRecordRow(finance);
             recordsBody.appendChild(row);
         });
+        fetchOverviewData(); // Add this line to update the overview
     } catch (error) {
         console.error('Error:', error);
         alert('Error fetching finance records: ' + error.message);
     }
 }
 
+// Create a row for finance record
+function createFinanceRecordRow(finance) {
+    const row = document.createElement('tr');
+    row.setAttribute('data-finance-id', finance.financeId); // Set data attribute for easy access
+
+    // Check if the record is deleted
+    const isDeleted = finance.isDeleted; // Assuming you have this property in the finance object
+
+    row.innerHTML = `
+        <td>${finance.type}</td>
+        <td>${finance.purpose || finance.expenseType || '-'}</td>
+        <td>$${parseFloat(finance.amount).toFixed(2)}</td>
+        <td>${new Date(finance.dateSubmitted).toLocaleDateString()}</td>
+        <td>
+            <span class="status-badge ${finance.status.toLowerCase()}">
+                ${finance.status}
+            </span>
+        </td>
+        <td>
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Actions
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <button class="dropdown-item" onclick="handleAdminAction('${finance.financeId}', 'approve')" ${isDeleted ? 'disabled' : ''}>Approve</button>
+                    <button class="dropdown-item" onclick="handleAdminAction('${finance.financeId}', 'reject')" ${isDeleted ? 'disabled' : ''}>Reject</button>
+                    <button class="dropdown-item" onclick="handleAdminAction('${finance.financeId}', 'recall')" ${isDeleted ? 'disabled' : ''}>Recall</button>
+                    <button class="dropdown-item" onclick="handleAdminAction('${finance.financeId}', 'delete')">Delete</button>
+                    <button class="dropdown-item" onclick="downloadFinanceFile('${finance.financeId}')">Download</button>
+                </div>
+            </div>
+        </td>
+    `;
+
+    // Optionally, you can visually indicate that the record is deleted
+    if (isDeleted) {
+        row.style.textDecoration = 'line-through'; // Strikethrough effect
+        row.style.color = 'gray'; // Optional: Change text color
+    }
+
+    return row;
+}
+
 // Fetch and display finance history
 async function fetchFinanceHistory() {
     try {
-        const response = await fetch(`${BASE_URL}/finances/me/history`, {
+        const response = await fetch(`${BASE_URL}/finances`, {
             headers: getAuthHeaders() // Use the getAuthHeaders function
         });
 
@@ -368,21 +427,7 @@ async function fetchFinanceHistory() {
         historyBody.innerHTML = ''; // Clear previous history
 
         history.forEach(finance => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${finance.type}</td>
-                <td>${finance.purpose || finance.expenseType || '-'}</td>
-                <td>$${parseFloat(finance.amount).toFixed(2)}</td>
-                <td>${new Date(finance.dateSubmitted).toLocaleDateString()}</td>
-                <td>
-                    <span class="status-badge ${finance.status.toLowerCase()}">
-                        ${finance.status}
-                    </span>
-                </td>
-                <td>
-                    <button onclick="downloadFinanceFile('${finance.financeId}')" class="btn btn-primary">Download</button>
-                </td>
-            `;
+            const row = createFinanceHistoryRow(finance);
             historyBody.appendChild(row);
         });
     } catch (error) {
@@ -391,28 +436,180 @@ async function fetchFinanceHistory() {
     }
 }
 
+// Create a row for finance history
+function createFinanceHistoryRow(finance) {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${finance.type}</td>
+        <td>${finance.purpose || finance.expenseType || '-'}</td>
+        <td>$${parseFloat(finance.amount).toFixed(2)}</td>
+        <td>${new Date(finance.dateSubmitted).toLocaleDateString()}</td>
+        <td>
+            <span class="status-badge ${finance.status.toLowerCase()}">
+                ${finance.status}
+            </span>
+        </td>
+        <td>
+            <button onclick="downloadFinanceFile('${finance.financeId}')" class="btn btn-primary">Download</button>
+        </td>
+    `;
+    return row;
+}
+
 // Function to handle admin actions
 async function handleAdminAction(financeId, action) {
     try {
-        const response = await fetch(`${BASE_URL}/finances/${financeId}/${action}`, {
+        let response;
+
+        // Fetch the current status of the finance record
+        const financeResponse = await fetch(`${BASE_URL}/finances/${financeId}`, {
+            headers: getAuthHeaders()
+        });
+
+        if (!financeResponse.ok) {
+            throw new Error('Failed to fetch finance record');
+        }
+
+        const financeRecord = await financeResponse.json();
+
+        if (action === 'delete') {
+            // Use DELETE method for deletion
+            response = await fetch(`${BASE_URL}/finances/${financeId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete finance record');
+            }
+
+            alert(`Finance record deleted successfully!`);
+            const recordRow = document.querySelector(`#admin-finance-records-body tr[data-finance-id="${financeId}"]`);
+            if (recordRow) {
+                recordRow.remove(); // Remove from admin records
+            }
+
+            fetchDeletedFinanceRecords(); // Refresh the deleted records table
+        } else {
+            // Check if the record is already approved or rejected
+            if (action === 'approve' && financeRecord.status === 'Approved') {
+                alert('This finance record has already been approved and cannot be approved again.');
+                return;
+            }
+            if (action === 'reject' && financeRecord.status === 'Rejected') {
+                alert('This finance record has already been rejected and cannot be rejected again.');
+                return;
+            }
+
+            // Use PATCH method for approve, reject, recall
+            response = await fetch(`${BASE_URL}/finances/${financeId}/${action}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
+                },
+                body: JSON.stringify("Feedback or reason for action") // Optional feedback
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to ${action} finance record`);
+            }
+
+            alert(`Finance record ${action}d successfully!`);
+
+            // Update the status in the UI
+            const recordRow = document.querySelector(`#admin-finance-records-body tr[data-finance-id="${financeId}"]`);
+            if (recordRow) {
+                const statusBadge = recordRow.querySelector('.status-badge');
+                if (action === 'reject') {
+                    statusBadge.textContent = 'Rejected';
+                    statusBadge.className = 'status-badge rejected'; // Update class for styling
+                } else if (action === 'approve') {
+                    statusBadge.textContent = 'Approved';
+                    statusBadge.className = 'status-badge approved'; // Update class for styling
+                } else if (action === 'recall') {
+                    statusBadge.textContent = 'Recalled';
+                    statusBadge.className = 'status-badge recalled'; // Update class for styling
+                }
+            }
+        }
+
+        fetchAdminFinanceRecords(); // Refresh the admin finance records table
+        fetchFinanceHistory(); // Refresh the finance history table if needed
+    } catch (error) {
+        console.error('Error:', error);
+        alert(`Error during admin action: ${error.message}`);
+    }
+}
+
+// Fetch and display deleted finance records
+async function fetchDeletedFinanceRecords() {
+    try {
+        const response = await fetch(`${BASE_URL}/finances/deleted`, {
+            headers: getAuthHeaders() // Use the getAuthHeaders function
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch deleted finance records');
+        }
+
+        const deletedFinances = await response.json();
+        const deletedRecordsBody = document.getElementById('deleted-finance-records-body');
+        deletedRecordsBody.innerHTML = ''; // Clear existing rows
+
+        deletedFinances.forEach(finance => {
+            const row = createDeletedFinanceRecordRow(finance);
+            deletedRecordsBody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error fetching deleted finance records: ' + error.message);
+    }
+}
+
+// Create a row for deleted finance record
+function createDeletedFinanceRecordRow(finance) {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${finance.type}</td>
+        <td>${finance.purpose || finance.expenseType || '-'}</td>
+        <td>$${parseFloat(finance.amount).toFixed(2)}</td>
+        <td>${new Date(finance.dateSubmitted).toLocaleDateString()}</td>
+        <td>
+            <span class="status-badge deleted">
+                Deleted <span class="text-danger" title="Deleted" style="margin-left: 5px;">&#10060;</span>
+            </span>
+        </td>
+        <td>
+            <button onclick="restoreFinanceRecord('${finance.financeId}')" class="btn btn-primary">Restore</button>
+        </td>
+    `;
+    row.style.textDecoration = 'line-through'; // Strikethrough effect
+    row.style.color = 'gray'; // Optional: Change text color
+    return row;
+}
+
+// Function to restore a deleted finance record
+async function restoreFinanceRecord(financeId) {
+    try {
+        const response = await fetch(`${BASE_URL}/finances/${financeId}/restore`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 ...getAuthHeaders()
-            },
-            body: JSON.stringify("Feedback or reason for action") // Optional feedback
+            }
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to ${action} finance record`);
+            throw new Error('Failed to restore finance record');
         }
 
-        alert(`Finance record ${action}d successfully!`);
+        alert('Finance record restored successfully!');
+        fetchDeletedFinanceRecords(); // Refresh the deleted records table
         fetchAdminFinanceRecords(); // Refresh the admin finance records table
-        fetchFinanceHistory(); // Refresh the finance history table
     } catch (error) {
         console.error('Error:', error);
-        alert(`Error during admin action: ${error.message}`);
+        alert('Error restoring finance record: ' + error.message);
     }
 }
 
@@ -423,7 +620,7 @@ function downloadFinanceFile(financeId) {
         headers: getAuthHeaders() // Use the getAuthHeaders function
     })
         .then(response => {
-            if (! response.ok) {
+            if (!response.ok) {
                 throw new Error('Failed to download the file');
             }
             return response.blob(); // Convert the response to a Blob
@@ -443,7 +640,6 @@ function downloadFinanceFile(financeId) {
             alert('Error downloading file: ' + error.message);
         });
 }
-
                 //LEAVE
 // Function to fetch and display all leave requests
 function fetchLeaveRequests() {
@@ -477,6 +673,7 @@ function fetchLeaveRequests() {
             `;
                 leaveTableBody.appendChild(row);
             });
+            fetchOverviewData(); // Add this line to update the overview
         })
         .catch(error => console.error('Error fetching leave records:', error));
 }
@@ -771,6 +968,7 @@ function createTask() {
         .then(newTask => {
             console.log('Task created successfully:', newTask);
             getAllTasks(); // Refresh the list
+            fetchOverviewData(); // Add this line to update the overview
             resetCreateTaskForm(); // Reset the form after creation
             $('#createTaskForm').hide(); // Hide the create task form
             $('#taskDetailModal').modal('hide'); // Close the modal after task creation
@@ -828,15 +1026,15 @@ function openCreateTaskModal() {
 }
 
 
-// Initialize the application
+// Call the fetchOverviewData function when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    // Call all necessary initialization functions
+    fetchOverviewData();
     populateEmployeeDropdown(); // Populate the employee dropdown
-    fetchAdminFinanceRecords()// Fetch and display all finance records
-    fetchFinanceHistory()
-    fetchLeaveRequests();     // Fetch and display all leave requests
-    fetchLeaveHistory();      // Fetch and display leave history
-    getAllEmployees();        // Fetch and display all employees
-    getAllContacts();         // Fetch and display all contacts
-    getAllTasks();           // Fetch and display all tasks
+    fetchAdminFinanceRecords(); // Fetch and display all finance records
+    fetchFinanceHistory(); // Fetch and display finance history
+    fetchLeaveRequests(); // Fetch and display all leave requests
+    fetchLeaveHistory(); // Fetch and display leave history
+    getAllEmployees(); // Fetch and display all employees
+    getAllContacts(); // Fetch and display all contacts
+    getAllTasks(); // Fetch and display all tasks
 });

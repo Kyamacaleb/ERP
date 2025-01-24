@@ -7,14 +7,15 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    height: 100vh;
+    height: 100vh; /* Full height of the viewport */
     width: 250px;
     background-color: #003366; /* Navy blue */
     color: white;
     padding-top: 20px;
-    transition: width 0.3s;
-    z-index: 100;
+    display: flex; /* Use flexbox */
+    flex-direction: column; /* Stack items vertically */
 }
+
 
 .sidebar.collapsed {
     width: 80px;
@@ -28,6 +29,26 @@ body {
 
 .sidebar a:hover, .sidebar .nav-link:hover {
     background-color: #00509e; /* Lighter navy on hover */
+}
+.sidebar .nav {
+    flex-grow: 1; /* Allow the nav to grow and take available space */
+}
+
+.sidebar .nav-item {
+    margin-bottom: 0; /* Remove margin between nav items */
+}
+
+.sidebar .nav-item:last-child {
+    margin-top: auto; /* Push the last item (buttons) to the bottom */
+}
+
+.sidebar button {
+    margin-top: 10px; /* Add some space above the buttons */
+}
+
+/* Optional: Add hover effects for buttons */
+.sidebar button:hover {
+    opacity: 0.8; /* Slightly fade on hover */
 }
 
 .content {
@@ -96,19 +117,19 @@ h5, h6 {
 }
 
 .status-badge.pending {
-    background-color: yellow; /* Pending */
+    background-color: #652803; /* Pending */
 }
 
 .status-badge.approved {
-    background-color: green; /* Approved */
+    background-color: #042704; /* Approved */
 }
 
 .status-badge.rejected {
-    background-color: red; /* Rejected */
+    background-color: #500505; /* Rejected */
 }
 
 .status-badge.recalled {
-    background-color: blue; /* Recalled */
+    background-color: #0c0c5e; /* Recalled */
 }
 
 /* Optional: Add hover effects */

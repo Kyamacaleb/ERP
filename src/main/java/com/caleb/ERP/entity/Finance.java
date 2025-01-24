@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -44,4 +45,10 @@ public class Finance {
 
     @Column(name = "feedback") // New field for feedback
     private String feedback; // Feedback from admin
+
+    @Column(name = "is_deleted") // Flag for soft delete
+    private boolean isDeleted = false; // Default to false
+
+    @Column(name = "deleted_at") // Timestamp for deletion
+    private LocalDateTime deletedAt; // Timestamp of when the record was deleted
 }
