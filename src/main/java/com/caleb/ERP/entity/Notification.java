@@ -1,11 +1,11 @@
 package com.caleb.ERP.entity;
 
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -23,7 +23,15 @@ public class Notification {
     private Employee recipient;
 
     private String message;
-    private String type;
-    private String dateSent;
+
+    private LocalDateTime dateSent;
+
     private boolean readStatus;
+
+    @PrePersist
+    public void prePersist() {
+        this.readStatus = false; // Default to unread
+        this.dateSent = LocalDateTime.now(); // Set the current time
+    }
 }
+

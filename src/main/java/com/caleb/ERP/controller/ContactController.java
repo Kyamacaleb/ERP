@@ -73,4 +73,16 @@ public class ContactController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
+    public ResponseEntity<Contact> createContact(@RequestBody Contact contact) {
+        try {
+            Contact createdContact = contactService.createContact(contact);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdContact);
+        } catch (Exception e) {
+            logger.error("Error creating contact: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
 }

@@ -1,269 +1,371 @@
-/* Default light mode */
 body {
-    background-color: #92a3b6; /* Light gray background */
-    font-family: Arial, sans-serif;
-    display: flex;
-    height: 100vh; /* Full height */
-    overflow: hidden; /* Prevent scrolling */
-    color: black;
+    background-color: #f0f4f8; /* Light background for contrast */
+    transition: background-color 0.3s;
 }
 
 .sidebar {
     position: fixed;
-    top: 0;
+    top: 60px; /* Move down to accommodate the top bar */
     left: 0;
-    height: 100vh; /* Full height of the viewport */
+    height: calc(100vh - 60px); /* Full height minus the height of the top bar */
     width: 250px;
-    background-color: #003366; /* Navy blue */
+    background: linear-gradient(135deg, #003366, #004080); /* Gradient background */
     color: white;
     padding-top: 20px;
     display: flex; /* Use flexbox */
     flex-direction: column; /* Stack items vertically */
+    z-index: 1000; /* Lower z-index than the top bar */
+    border-right: 2px solid #00509e; /* Right border */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* Shadow on the right */
+    border-radius: 0 10px 10px 0; /* Rounded right corners */
 }
 
-.sidebar a {
-    color: #ffffff; /* White */
-    text-decoration: none;
-    padding: 10px;
-    display: block;
-    border-radius: 5px;
-    transition: background-color 0.3s;
+.sidebar.collapsed {
+    width: 80px;
 }
 
-.sidebar a:hover {
-    background-color: #007bff; /* Royal Blue */
-}
-
-.sidebar a.active {
-    background-color: #0056b3; /* Darker shade of Royal Blue */
-    font-weight: bold;
-}
-
-.top-bar {
-    background-color: #003366; /* Lighter shade of Navy Blue */
+.sidebar a, .sidebar .nav-link {
     color: #ffffff; /* White text */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 10px 20px;
-    position: fixed;
-    width: calc(100% - 250px);
-    left: 250px;
-    top: 0;
-    z-index: 200;
+    padding: 15px 20px;
+    transition: background-color 0.3s, transform 0.2s; /* Smooth transition for hover */
+}
+
+.sidebar a:hover, .sidebar .nav-link:hover {
+    background-color: #00509e; /* Lighter navy on hover */
+    transform: scale(1.05); /* Slightly enlarge on hover */
+}
+
+.sidebar .nav-link.active {
+    background-color: #00509e; /* Active link color */
+    font-weight: bold; /* Bold text for active link */
+}
+
+.sidebar .nav {
+    flex-grow: 1; /* Allow the nav to grow and take available space */
+}
+
+.sidebar .nav-item {
+    margin-bottom: 0; /* Remove margin between nav items */
+}
+
+.sidebar .nav-item:last-child {
+    margin-top: auto; /* Push the last item (buttons) to the bottom */
+}
+
+.sidebar button {
+    margin-top: 10px; /* Add some space above the buttons */
+}
+
+/* Optional: Add hover effects for buttons */
+.sidebar button:hover {
+    opacity: 0.8; /* Slightly fade on hover */
 }
 
 .content {
-    margin-left: 250px;
-    margin-top: 60px; /* Adjust for top bar height */
+    margin-left: 250px; /* Sidebar width */
+    margin-top: 60px; /* Height of the top bar */
     padding: 20px;
-    flex: 1; /* Allow content to grow and fill remaining space */
-    overflow-y: auto; /* Enable scrolling if content overflows */
+    transition: margin-left 0.3s, margin-top 0.3s; /* Add transition for margin-top */
 }
 
-.section-title {
-    color: #001f3f; /* Navy Blue */
-    margin-bottom: 20px;
+.content.collapsed {
+    margin-left: 80px; /* Adjust for collapsed sidebar */
+    margin-top: 60px; /* Keep the same height for the top bar */
+}
+
+.top-bar {
+    position: fixed; /* Fix the top bar at the top */
+    top: 0;
+    left: 0; /* Align with the left edge */
+    right: 0; /* Stretch to the right */
+    height: 60px; /* Set a height for the top bar */
+    background: linear-gradient(135deg, #002244, #003366); /* Gradient background */
+    color: white; /* White text */
+    display: flex; /* Use flexbox for layout */
+    align-items: center; /* Center items vertically */
+    padding: 0 20px; /* Add some padding */
+    z-index: 1001; /* Higher z-index to be on top of the sidebar */
+    transition: left 0.3s, box-shadow 0.3s; /* Smooth transition for collapsing */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Shadow for top bar */
+    border-bottom: 2px solid #00509e; /* Bottom border */
+    border-radius: 0 0 10px 10px; /* Rounded bottom corners */
+}
+
+.top-bar.collapsed {
+    left: 80px; /* Adjust position when sidebar is collapsed */
+}
+
+.top-bar h1 {
+    margin: 0; /* Remove default margin */
+    font-size: 1.5em; /* Adjust font size */
+}
+
+.top-bar nav {
+    margin-left: auto; /* Push nav to the right */
+}
+
+.top-bar nav ul {
+    list-style: none; /* Remove bullet points */
+    padding: 0; /* Remove padding */
+    margin: 0; /* Remove margin */
+    display: flex; /* Use flexbox for horizontal layout */
+}
+
+.top-bar nav ul li {
+    margin-left: 20px; /* Space between nav items */
+}
+
+.top-bar nav ul li a {
+    color: white; /* White text */
+    text-decoration: none; /* Remove underline */
+    padding: 10px; /* Add padding */
+    transition: background-color 0.3s, border-radius 0.3s; /* Smooth transition for hover */
+}
+
+.top-bar nav ul li a:hover {
+    background-color: #00509e; /* Lighter navy on hover */
+    border-radius: 4px; /* Rounded corners on hover */
+}
+
+.navbar {
+    background-color: #003366; /* Navy blue */
+}
+
+.navbar-brand, .navbar-nav .nav-link {
+    color: #ffffff; /* White text */
+}
+
+.navbar-nav .nav-link:hover {
+    color: #ffcc99; /* Peach color on hover */
+}
+
+.modal-header {
+    background-color: #00509e; /* Lighter blue */
+    color: white;
+}
+
+.dark-mode {
+    background-color: #343a40;
+    color: white;
 }
 
 .hidden {
     display: none;
 }
 
-.overview-card {
-    margin-bottom: 20px;
-    background-color: #1b213a; /* White background for cards */
-    border-radius: 10px; /* Rounded corners */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-}
-
 .card {
-    border: none; /* Remove default card border */
-}
-
-/* Dark Mode Styles */
-body.dark-mode {
-    background-color: #121212; /* Dark background */
-    color: #ffffff; /* Light text */
-}
-
-.sidebar.dark-mode {
-    background-color: #1e1e1e; /* Darker sidebar */
-    color: #ffffff;
-}
-
-.sidebar.dark-mode a {
-    color: #bbbbbb; /* Adjust sidebar links */
-}
-
-.sidebar.dark-mode a:hover {
-    background-color: #007bff; /* Royal Blue on hover */
-}
-
-.top-bar.dark-mode {
-    background-color: #1e1e1e; /* Dark top bar */
-    color: #ffffff;
-}
-
-.content.dark-mode {
-    background-color: #1e1e1e; /* Dark content area */
-    color: #ffffff; /* Light text */
-}
-
-.content.dark-mode .overview-card {
-    background-color: #333333; /* Dark cards */
-    color: #ffffff;
-}
-
-button.dark-mode {
-    color: #ffffff;
-    background-color: #333333;
-    border-color: #444444;
-}
-
-button.dark-mode:hover {
-    background-color: #444444;
-    border-color: #555555;
-}
-
-input.dark-mode {
-    background-color: #333333;
-    color: #ffffff;
-    border-color: #444444;
-}
-
-input.dark-mode::placeholder {
-    color: #888888;
-}
-
-a.dark-mode {
-    color: #1e90ff; /* Lighter color for links in dark mode */
-}
-
-.logout.dark-mode {
-    color: red; /* Logout button stays readable */
-}
-
-/* Improved card contrast in dark mode */
-.content.dark-mode .card {
-    border: 1px solid #444444;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* Scrollbar styling for dark mode */
-body.dark-mode ::-webkit-scrollbar {
-    width: 10px;
-}
-
-body.dark-mode ::-webkit-scrollbar-thumb {
-    background: #444444;
-    border-radius: 5px;
-}
-
-/* Contact Directory */
-.contact-directory {
-    margin-bottom: 20px;
-}
-
-.contact-directory .contact-card {
-    background-color: #ffffff; /* White background for cards */
-    border: 1px solid #dddddd;
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 10px;
-}
-
-.contact-directory .contact-card h3 {
-    margin: 0;
-    color: #001f3f; /* Navy Blue for titles */
-}
-
-.contact-directory .contact-card p {
-    margin: 5px 0;
-    color: #333333; /* Dark gray for details */
-}
-
-.contact-directory.dark-mode .contact-card {
-    background-color: #333333; /* Dark background for cards */
-    border: 1px solid #444444;
-}
-
-.contact-directory.dark-mode .contact-card h3 {
-    color: #ffffff; /* White titles in dark mode */
-}
-
-.contact-directory.dark-mode .contact-card p {
-    color: #bbbbbb; /* Light gray details in dark mode */
-}
-
-.section {
-    padding: 20px;
-}
-
-.card {
-    display: block !important; /* Force display */
-}
-
-#contactsContainer {
-    display: block !important; /* Force display */
-}
-
-.flex-container {
-    display: flex;
-    flex-wrap: wrap; /* Allow items to wrap to the next line */
-    gap: 20px; /* Space between items */
-}
-
-.contact-card {
-    flex: 1 1 calc(30% - 20px); /* Adjust the width of each card */
-    background: #f9f9f9; /* Light background */
-    border: 1px solid #ccc; /* Border for definition */
+    margin-bottom: 20px; /* Add margin to the bottom of cards */
+    border: 1px solid #ddd; /* Light border for cards */
     border-radius: 5px; /* Rounded corners */
-    padding: 15px; /* Padding inside the card */
+    background-color: white; /* White background for cards */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    transition: transform 0.2s; /* Animation for hover effect */
+    transition: transform 0.2s; /* Smooth transform on hover */
 }
 
-.contact-card:hover {
-    transform: scale(1.05); /* Slightly enlarge on hover */
+.card:hover {
+    transform: scale(1.02); /* Slightly enlarge on hover */
 }
 
-.contact-card h5 {
-    margin: 0; /* Remove default margin */
-    color: #333; /* Darker text for names */
+.card-header {
+    background-color: #f7f7f7; /* Light gray background for header */
+    font-weight: bold; /* Bold text for header */
+    padding: 10px; /* Padding for header */
 }
 
-.contact-card p {
-    margin: 0.5em 0; /* Space between paragraphs */
-    color: #666; /* Lighter text for details */
+.card-body {
+    padding: 15px; /* Padding for card body */
 }
 
-.status-badge {
-    display: inline-block; /* Make it behave like a block element */
-    padding: 0.5em 1em; /* Add some padding */
-    border-radius: 0.25rem; /* Rounded corners */
-    color: white; /* Text color */
+.card-footer {
+    background-color: #f7f7f7; /* Light gray background for footer */
+    padding: 10px; /* Padding for footer */
+    text-align: right; /* Align footer text to the right */
+}
+
+.button-primary {
+    background-color: #007bff; /* Primary button color */
+    color: white; /* White text */
+    border: none; /* No border */
+    padding: 10px 15px; /* Padding for button */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s; /* Smooth transition for background color */
+}
+
+.button-primary:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+}
+
+.alert {
+    padding: 15px; /* Padding for alert */
+    margin-bottom: 20px; /* Margin below alert */
+    border: 1px solid transparent; /* Transparent border */
+    border-radius: 5px; /* Rounded corners */
+}
+
+.alert-success {
+    color: #155724; /* Success text color */
+    background-color: #d4edda; /* Light green background */
+    border-color: #c3e6cb; /* Green border */
+}
+
+.alert-danger {
+    color: #721c24; /* Danger text color */
+    background-color: #f8d7da; /* Light red background */
+    border-color: #f5c6cb; /* Red border */
+}
+
+.footer {
+    background-color: #002244; /* Dark footer background */
+    color: white; /* White text */
+    text-align: center; /* Center text */
+    padding: 20px; /* Padding for footer */
+    position: relative; /* Position relative for footer */
+    bottom: 0; /* Stick to the bottom */
+    width: 100%; /* Full width */
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%; /* Full width on small screens */
+        height: auto; /* Auto height */
+        position: relative; /* Change to relative */
+    }
+
+    .top-bar {
+        left: 0; /* Align with the left edge */
+        right: 0; /* Stretch to the right */
+    }
+
+    .content {
+        margin-left: 0; /* No margin on small screens */
+        margin-top: 60px; /* Keep top margin for the top bar */
+    }
+}
+
+/* Dashboard Section Styles */
+.dashboard-section {
+    position: relative; /* Position relative for the section */
+    padding: 20px; /* Add padding around the section */
+}
+
+.fixed-card {
+    position: fixed; /* Fix the card in place */
+    top: 60px; /* Below the top bar */
+    left: 50%; /* Center horizontally */
+    transform: translateX(-50%); /* Adjust for centering */
+    width: 90%; /* Width of the card */
+    max-width: 800px; /* Maximum width */
+    z-index: 1000; /* Ensure it is above other content */
+    background-color: #ffffff; /* White background for the card */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Shadow for depth */
+    overflow: hidden; /* Hide overflow */
+}
+
+.section-title {
+    font-size: 1.8em; /* Increase font size for section title */
+    margin-bottom: 20px; /* Space below the title */
+}
+
+.profile-picture {
+    width: 150px; /* Fixed width for profile picture */
+    height: 150px; /* Fixed height for profile picture */
+    margin: 10px auto; /* Center the profile picture */
+}
+
+.overlay {
+    position: fixed; /* Fixed position for overlay */
+    top: 0; /* Cover the entire viewport */
+    left: 0; /* Cover the entire viewport */
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    z-index: 500; /* Below the card but above other content */
+    display: none; /* Hidden by default */
+}
+
+.show-overlay {
+    display: block; /* Show overlay when needed */
+}
+/* Base styles for progress bars */
+.progress {
+    height: 20px; /* Height of the progress bar */
+    background-color: #e9ecef; /* Light gray background */
+    border-radius: 5px; /* Rounded corners */
+    overflow: hidden; /* Prevent overflow */
+}
+
+/* Progress bar styles */
+.progress-bar {
+    height: 100%; /* Full height of the parent */
+    transition: width 0.4s ease; /* Smooth transition for width changes */
+    color: white; /* Text color inside the progress bar */
     text-align: center; /* Center the text */
-    font-weight: bold; /* Make the text bold */
-    cursor: pointer; /* Change cursor to pointer */
-    transition: background-color 0.3s; /* Smooth transition for hover effect */
+}
+
+/* Success state (more than 50% remaining) */
+.bg-success {
+    background-color: #28a745; /* Green color */
+}
+
+/* Warning state (between 20% and 50% remaining) */
+.bg-warning {
+    background-color: #ffc107; /* Yellow color */
+}
+
+/* Danger state (less than 20% remaining) */
+.bg-danger {
+    background-color: #dc3545; /* Red color */
+}
+.status-badge {
+    display: inline-block;
+    padding: 0.5em 1em;
+    border-radius: 0.25em;
+    color: white;
+    font-weight: bold;
 }
 
 .status-badge.pending {
-    background-color: yellow; /* Pending */
+    background-color: orange; /* Pending status */
 }
 
 .status-badge.approved {
-    background-color: green; /* Approved */
+    background-color: green; /* Approved status */
 }
 
 .status-badge.rejected {
-    background-color: red; /* Rejected */
+    background-color: red; /* Rejected status */
 }
 
 .status-badge.recalled {
-    background-color: blue; /* Recalled */
+    background-color: blue; /* Recalled status */
+}
+.contact-card {
+    transition: transform 0.2s;
 }
 
-/* Optional: Add hover effects */
-.status-badge:hover {
-    opacity: 0.8; /* Slightly fade on hover */
+.contact-card:hover {
+    transform: scale(1.05);
+}
+
+.card {
+    border: 1px solid #0b0b68;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.card-text {
+    font-size: 1rem;
+    color: #0e1012;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
 }

@@ -2,25 +2,31 @@ package com.caleb.ERP.service;
 
 import com.caleb.ERP.entity.Employee;
 import com.caleb.ERP.entity.Leave;
+import com.caleb.ERP.repository.EmployeeRepository;
 import com.caleb.ERP.repository.LeaveRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class LeaveService {
+
     @Autowired
     private LeaveRepository leaveRepository;
+
     @Autowired
     private EmployeeService employeeService;
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private NotificationService notificationService; // Inject NotificationService
 
     public Leave submitLeaveRequest(Leave leaveRequest) {
         // Validate leave request
@@ -35,7 +41,7 @@ public class LeaveService {
         LocalDate today = LocalDate.now();
         LocalDate startDate = LocalDate.parse(leaveRequest.getStartDate());
         if (startDate.isBefore(today)) {
-            throw new IllegalArgumentException("Start date cannot be in the past.");
+            throw new IllegalArgumentException("Start date cannot be in the past. Please select a valid start date.");
         }
 
         // 3. Check if the end date is after the start date
@@ -49,6 +55,11 @@ public class LeaveService {
         leaveRequest.setDaysTaken((int) daysBetween); // Set the number of days taken
         leaveRequest.setDaysAllocated(21); // Set the allocated days (constant value)
 
+        // Check if days taken exceed allocated days
+        if (daysBetween > leaveRequest.getDaysAllocated()) {
+            throw new IllegalArgumentException("You cannot exceed the allocated " + leaveRequest.getDaysAllocated() + " days for " + leaveRequest.getLeaveType() + ".");
+        }
+
         // Set the date requested to the current date
         leaveRequest.setDateRequested(LocalDate.now().toString()); // Set to current date
 
@@ -59,13 +70,23 @@ public class LeaveService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String employeeEmail = authentication.getName(); // Assuming the email is used as the username
         Employee employee = employeeService.getEmployeeByEmail(employeeEmail)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElseThrow(() -> new NoSuchElementException("Employee not found"));
 
         // Set the employee in the leave request
         leaveRequest.setEmployee(employee); // Set the entire Employee object
 
         // 7. Save the leave request
-        return leaveRepository.save(leaveRequest);
+        Leave savedLeave = leaveRepository.save(leaveRequest);
+
+        // Send notification about the new leave request
+        String message = "New Leave Request: " + employee.getFullName() + " has submitted a leave request.";
+        notificationService.sendNotification(message, employee); // Notify employee
+
+        // Notify admin
+        String adminMessage = "New Leave Request Submitted by: " + employee.getFullName();
+        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+
+        return savedLeave;
     }
 
     public List<Leave> getAllLeaves() {
@@ -73,7 +94,7 @@ public class LeaveService {
     }
 
     public Leave getLeaveById(UUID id) {
-        return leaveRepository.findById(id).orElseThrow(() -> new RuntimeException("Leave not found"));
+        return leaveRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Leave not found"));
     }
 
     public void approveLeave(UUID id, String approverName) {
@@ -125,6 +146,14 @@ public class LeaveService {
 
         // Update employee balances in the database
         employeeService.updateEmployee(employee.getEmployeeId(), employee);
+
+        // Send notification about the leave approval
+        String message = "Leave Approved: " + employee.getFullName() + " has had their leave approved by " + approverName;
+        notificationService.sendNotification(message, employee); // Notify employee
+
+        // Notify admin
+        String adminMessage = "Leave Approved for Employee: " + employee.getFullName();
+        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
     }
 
     public void rejectLeave(UUID id) {
@@ -137,8 +166,17 @@ public class LeaveService {
         if ("Rejected".equals(leave.getStatus())) {
             throw new IllegalArgumentException("This leave request has already been rejected.");
         }
+
         leave.setStatus("Rejected");
         leaveRepository.save(leave);
+
+        // Send notification about the leave rejection
+        String message = "Leave Rejected: " + leave.getEmployee().getFullName() + "'s leave request has been rejected.";
+        notificationService.sendNotification(message, leave.getEmployee()); // Notify employee
+
+        // Notify admin
+        String adminMessage = "Leave Rejected for Employee: " + leave.getEmployee().getFullName();
+        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
     }
 
     public List<Leave> getLeavesByCurrentEmployee() {
@@ -146,9 +184,9 @@ public class LeaveService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String employeeEmail = authentication.getName(); // Assuming the email is used as the username
 
-        // Find the employee by email (you may need to adjust this based on your Employee entity)
+        // Find the employee by email
         Employee employee = employeeService.getEmployeeByEmail(employeeEmail)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElseThrow(() -> new NoSuchElementException("Employee not found"));
 
         // Retrieve and return the leaves associated with the employee
         return leaveRepository.findByEmployee(employee);
@@ -176,30 +214,48 @@ public class LeaveService {
         return stats;
     }
 
-
     public Leave updateLeaveRequest(UUID id, Leave leaveRequest) {
-        // Fetch the leave request by ID
+        // Fetch the existing leave request by ID
         Leave existingLeave = leaveRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Leave request not found"));
+                .orElseThrow(() -> new NoSuchElementException("Leave request not found"));
 
         // Check if the leave status is "Pending"
         if (!"Pending".equals(existingLeave.getStatus())) {
             throw new IllegalArgumentException("Leave request can only be updated if the status is 'Pending'.");
         }
 
-        // Update the leave details
+        // Update the leave details with new data
         existingLeave.setLeaveType(leaveRequest.getLeaveType());
         existingLeave.setStartDate(leaveRequest.getStartDate());
         existingLeave.setEndDate(leaveRequest.getEndDate());
         existingLeave.setReason(leaveRequest.getReason());
 
+        // Calculate the number of leave days
+        LocalDate startDate = LocalDate.parse(leaveRequest.getStartDate());
+        LocalDate endDate = LocalDate.parse(leaveRequest.getEndDate());
+        long daysBetween = ChronoUnit.DAYS.between(startDate, endDate) + 1; // Include the end date
+        existingLeave.setDaysTaken((int) daysBetween); // Set the number of days taken
+        existingLeave.setDaysAllocated(21); // Set the allocated days (constant value)
+
         // Save the updated leave request
-        return leaveRepository.save(existingLeave);
+        Leave updatedLeave = leaveRepository.save(existingLeave);
+
+        // Send notification about the leave update
+        String message = "Leave Updated: " + updatedLeave.getEmployee().getFullName() + "'s leave request has been updated.";
+        notificationService.sendNotification(message, updatedLeave.getEmployee()); // Notify employee
+
+        // Notify admin
+        String adminMessage = "Leave Updated for Employee: " + updatedLeave.getEmployee().getFullName();
+        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+
+        return updatedLeave;
     }
+
     public List<Leave> getAllLeaveHistory() {
         // Fetch all leaves that are not pending
         return leaveRepository.findByStatusNot("Pending");
     }
+
     public void recallLeave(UUID id) {
         Leave leave = getLeaveById(id);
 
@@ -216,5 +272,19 @@ public class LeaveService {
         // Update the status to "Recalled"
         leave.setStatus("Recalled");
         leaveRepository.save(leave);
+
+        // Send notification about the leave recall
+        String message = "Leave Recalled: " + leave.getEmployee().getFullName() + "'s leave request has been recalled.";
+        notificationService.sendNotification(message, leave.getEmployee()); // Notify employee
+
+        // Notify admin
+        String adminMessage = "Leave Recalled for Employee: " + leave.getEmployee().getFullName();
+        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+    }
+
+    // Example method to get the admin employee (you need to implement this based on your application logic)
+    private Employee getAdminEmployee() {
+        return employeeRepository.findByRole("ADMIN")
+                .orElseThrow(() -> new NoSuchElementException("Admin employee not found"));
     }
 }

@@ -1,3 +1,5 @@
+server:
+  port: 8082
 
 spring:
   thymeleaf:
@@ -7,7 +9,7 @@ spring:
     encoding: UTF-8
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/erp
+    url: jdbc:postgresql://localhost:5432/erp
     username: postgres
     password: 8235
 
@@ -20,3 +22,4 @@ spring:
 logging:
   level:
     org.springframework.security: DEBUG  # Enable DEBUG level logging for security-related information
+

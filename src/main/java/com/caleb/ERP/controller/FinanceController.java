@@ -39,7 +39,7 @@ public class FinanceController {
             @RequestParam("purpose") String purpose,
             @RequestParam("amount") double amount,
             @RequestParam("dateSubmitted") String dateSubmitted, // Accept the date from the form
-            @RequestParam(value = "file", required = false) MultipartFile file) {
+            @RequestParam(value = "description", required = false) String description) { // Optional description
 
         Finance finance = new Finance();
         finance.setPurpose(purpose);
@@ -47,7 +47,8 @@ public class FinanceController {
         finance.setType("Requisition");
         finance.setDateSubmitted(dateSubmitted); // Set the date from the request
         finance.setStatus("Pending"); // Default status
-        return createFinanceRecord(finance, file);
+        finance.setDescription(description); // Set the optional description
+        return createFinanceRecord(finance, null); // No file for requisition
     }
 
     // Create a new claim record
@@ -57,7 +58,8 @@ public class FinanceController {
             @RequestParam("expenseType") String expenseType,
             @RequestParam("amount") double amount,
             @RequestParam("dateSubmitted") String dateSubmitted, // Accept the date from the form
-            @RequestParam(value = "file", required = false) MultipartFile file) {
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "description", required = false) String description) { // Optional description
 
         Finance finance = new Finance();
         finance.setExpenseType(expenseType);
@@ -65,6 +67,7 @@ public class FinanceController {
         finance.setType("Claim");
         finance.setDateSubmitted(dateSubmitted); // Set the date from the request
         finance.setStatus("Pending"); // Default status
+        finance.setDescription(description); // Set the optional description
         return createFinanceRecord(finance, file);
     }
 
@@ -191,16 +194,16 @@ public class FinanceController {
     // Approve a finance record (for Admin)
     @PatchMapping("/{financeId}/approve")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> approveFinance(@PathVariable UUID financeId, @RequestBody String feedback) {
-        financeService.approveFinance(financeId, feedback);
+    public ResponseEntity<Void> approveFinance(@PathVariable UUID financeId) {
+        financeService.approveFinance(financeId);
         return ResponseEntity.ok().build();
     }
 
     // Reject a finance record (for Admin)
     @PatchMapping("/{financeId}/reject")
     @PreAuthorize("hasRole ('ADMIN')")
-    public ResponseEntity<Void> rejectFinance(@PathVariable UUID financeId, @RequestBody String feedback) {
-        financeService.rejectFinance(financeId, feedback);
+    public ResponseEntity<Void> rejectFinance(@PathVariable UUID financeId) {
+        financeService.rejectFinance(financeId);
         return ResponseEntity.ok().build();
     }
 

@@ -50,6 +50,18 @@
     <div class="collapse navbar-collapse" id="navbarNav">
         <span class="navbar-text mr-auto">Admin Dashboard</span>
         <span id="activeSection" class="navbar-text"></span>
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="notificationDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-bell"></i>
+                <span id="notificationCount" class="badge badge-light">0</span>
+            </button>
+            <div class="dropdown-menu" aria-labelledby="notificationDropdown" id="notificationList">
+                <h6 class="dropdown-header">Notifications</h6>
+                <div id="notificationItems"></div>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item" id="markAllAsRead">Mark all as read</button>
+            </div>
+        </div>
     </div>
 </nav>
 
@@ -94,6 +106,30 @@
         </div>
     </div>
 
+    <!-- Notifications Section -->
+    <div class="card" id="notifications">
+        <div class="card-header">
+            <h5>Notifications</h5>
+        </div>
+        <div class="card-body">
+            <div id="notificationListContainer">
+                <table class="table table-bordered" aria-label="Notification List">
+                    <thead>
+                    <tr>
+                        <th>Message</th>
+                        <th>Date Sent</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="notificationTableBody">
+                    <!-- Notification rows will be populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- Employee Management -->
     <div class="card hidden" id="employeeManagement">
         <div class="card-header">
@@ -119,6 +155,7 @@
                     <div class="form-group">
                         <label for="employeePassword">Password</label>
                         <input type="password" class="form-control" id="employeePassword" required>
+                        <label for="showPassword"></label><input type="checkbox" id="showPassword" onclick="togglePasswordVisibility('employeePassword', 'showPassword')"> Show Password
                     </div>
                     <div class="form-group">
                         <label for="employeeRole">Role</label>
@@ -133,7 +170,25 @@
                     </div>
                     <div class="form-group">
                         <label for="employeeDepartment">Department</label>
-                        <input type="text" class="form-control" id="employeeDepartment" required>
+                        <select class="form-control" id="employeeDepartment" required>
+                            <option value="HR">HR</option>
+                            <option value="ADMIN">Admin</option>
+                            <option value="ACCOUNTS">Accounts</option>
+                            <option value="QA">QA</option>
+                            <option value="SOFTWARE_DEVELOPMENT">Software Development</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="employeeJoiningDate">Date of Joining</label>
+                        <input type="date" class="form-control" id="employeeJoiningDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="emergencyContactName">Emergency Contact Name</label>
+                        <input type="text" class="form-control" id="emergencyContactName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="emergencyContactNumber">Emergency Contact Number</label>
+                        <input type="text" class="form-control" id="emergencyContactNumber" required>
                     </div>
                     <button type="button" class="btn btn-primary" onclick="createEmployee()">Create Employee</button>
                 </form>
@@ -143,22 +198,76 @@
 
             <h6>View All Employees</h6>
             <div id="employeeList" class="mt-3">
-                <table class="table table-bordered" aria-label="Employee List">
-                    <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Phone Number</th>
-                        <th>Department</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody id="employeeTableBody">
-                    <!-- Employee rows will be populated dynamically -->
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-bordered" aria-label="Employee List">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Phone Number</th>
+                            <th>Department</th>
+                            <th>Date of Joining</th>
+                            <th>Emergency Contact Name</th>
+                            <th>Emergency Contact Number</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="employeeTableBody">
+                        <!-- Employee rows will be populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Employee Modal -->
+    <div class="modal" id="updateEmployeeModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Employee</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeUpdateModal()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateEmployeeForm">
+                        <div class="form-group">
+                            <label for="updateEmployeeName">First Name</label>
+                            <input type="text" class="form-control" id="updateEmployeeName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="updateEmployeeLastName">Last Name</label>
+                            <input type="text" class="form-control" id="updateEmployeeLastName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="updateEmployeePhoneNumber">Phone Number</label>
+                            <input type="text" class="form-control" id="updateEmployeePhoneNumber" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="updateEmergencyContactName">Emergency Contact Name</label>
+                            <input type="text" class="form-control" id="updateEmergencyContactName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="updateEmergencyContactNumber">Emergency Contact Phone</label>
+                            <input type="text" class="form-control" id="updateEmergencyContactNumber" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="updateEmployeeDepartment">Department</label>
+                            <select class="form-control" id="updateEmployeeDepartment" required>
+                                <option value="HR">HR</option>
+                                <option value="ADMIN">Admin</option>
+                                <option value="ACCOUNTS">Accounts</option>
+                                <option value="QA">QA</option>
+                                <option value="SOFTWARE_DEVELOPMENT">Software Development</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="updateEmployee()">Update Employee</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -418,6 +527,11 @@
         }
     }
 
+    function togglePasswordVisibility(passwordFieldId, checkboxId) {
+        const passwordField = document.getElementById(passwordFieldId);
+        const checkbox = document.getElementById(checkboxId);
+        passwordField.type = checkbox.checked ? 'text' : 'password';
+    }
     // Function to toggle dark mode
     document.getElementById('toggleDarkMode').addEventListener('click', function() {
         document.body.classList.toggle('bg-dark');

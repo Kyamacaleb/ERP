@@ -136,3 +136,7 @@ h5, h6 {
 .status-badge:hover {
     opacity: 0.8; /* Slightly fade on hover */
 }
+.dropdown-menu {
+    max-height: 300px;
+    overflow-y: auto;
+}

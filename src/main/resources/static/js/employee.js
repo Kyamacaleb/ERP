@@ -1,5 +1,6 @@
 // Base URL for API requests
-const BASE_URL = 'http://localhost:8080'; // Adjust this to your actual backend URL
+const BASE_URL = 'http://localhost:8082'; // Adjust this to your actual backend URL
+
 // Function to show the modal
 function showEditLeaveRequestModal() {
     const modal = document.getElementById('editLeaveRequestModal');
@@ -18,47 +19,34 @@ function hideEditLeaveRequestModal() {
     }
 }
 
-// Load initial data
-document.addEventListener('DOMContentLoaded', function() {
+
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('Employee dashboard script loaded');
-    loadPersonalInfo(); // Load personal information when the dashboard is loaded
-    loadContacts(); // Load contacts for the Contact Directory module
-    loadLeaveBalances();
-    loadLeaveHistory(); // Load leave history
-    fetchFinanceRecords(); // Fetch finance records on page load
-    fetchFinanceHistory();
-    fetchTasks(); // Load tasks when the dashboard is loaded
+    try {
+        await loadPersonalInfo();
+        console.log('Personal info loaded');
+        await loadContacts();
+        console.log('Contacts loaded');
+        await loadLeaveBalances();
+        console.log('Leave balances loaded');
+        await loadLeaveHistory();
+        console.log('Leave history loaded');
+        await fetchFinanceRecords();
+        console.log('Finance records fetched');
+        await fetchTasks();
+        console.log('Tasks loaded');
+        await fetchNotifications();
+        console.log('Notifications fetched');
 
-    // Ensure the search input exists before adding an event listener
-    const searchInput = document.getElementById('searchContacts');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const contactCards = document.querySelectorAll('.card'); // Select all contact cards
-
-            contactCards.forEach(card => {
-                const contactName = card.querySelector('.card-title').textContent.toLowerCase();
-                const department = card.querySelector('.card-text:nth-child(2)').textContent.toLowerCase();
-                const phone = card.querySelector('.card-text:nth-child(3)').textContent.toLowerCase();
-
-                // Show or hide the card based on the search term
-                if (contactName.includes(searchTerm) || department.includes(searchTerm) || phone.includes(searchTerm)) {
-                    card.parentElement.style.display = ''; // Show the card
-                } else {
-                    card.parentElement.style.display = 'none'; // Hide the card
-                }
-            });
-        });
+        showSection('overview'); // Show Overview by default
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
     }
-
     // Dark Mode Toggle
-    document.getElementById('toggleDarkMode').addEventListener('click', function() {
+    document.getElementById('toggleDarkMode').addEventListener('click', () => {
         document.body.classList.toggle('dark-mode');
-        if (document.body.classList.contains('dark-mode')) {
-            localStorage.setItem('darkMode', 'enabled');
-        } else {
-            localStorage.removeItem('darkMode');
-        }
+        document.querySelector('.sidebar').classList.toggle('dark-mode');
+        document.querySelectorAll('.card').forEach(card => card.classList.toggle('dark-mode'));
     });
 
     // Check for saved user preference on page load
@@ -87,18 +75,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-
-// Function to show the selected section
-function showSection(sectionId) {
-    const sections = document.querySelectorAll('.dashboard-section');
-    sections.forEach(section => {
-        if (section.id === sectionId) {
-            section.classList.remove('hidden');
-        } else {
-            section.classList.add('hidden');
-        }
-    });
-}
 
 // Logout function
 function logout() {
@@ -200,6 +176,7 @@ async function loadPersonalInfo() {
     }
 }
 
+// Function to display contacts
 const displayContacts = (contacts) => {
     const contactsContainer = document.getElementById('contactsContainer'); // Get the container
     contactsContainer.innerHTML = ''; // Clear previous contacts
@@ -227,6 +204,7 @@ const displayContacts = (contacts) => {
         contactsContainer.appendChild(card);
     });
 };
+
 // Load contacts function
 async function loadContacts() {
     try {
@@ -252,7 +230,8 @@ async function loadContacts() {
     } catch (error) {
         console.error("Error fetching contacts:", error);
     }
-}
+};
+
 // Handle profile picture upload
 document.getElementById('profilePictureUpload').addEventListener('change', function(event) {
     const file = event.target.files[0]; // Get the selected file
@@ -359,14 +338,14 @@ document.getElementById('editProfileForm').addEventListener('submit', function(e
             return response.json(); // Parse the JSON response
         })
         .then(data => {
-        alert('Profile updated successfully!'); // Notify the user of success
-        loadPersonalInfo(); // Refresh the personal information displayed
-        $('#editProfileModal').modal('hide'); // Hide the modal after successful update
-    })
-    .catch(error => {
-        console.error('Error updating employee data:', error); // Log any errors
-        alert('Error updating profile: ' + error.message); // Notify the user of the error
-    });
+            alert('Profile updated successfully!'); // Notify the user of success
+            loadPersonalInfo(); // Refresh the personal information displayed
+            $('#editProfileModal').modal('hide'); // Hide the modal after successful update
+        })
+        .catch(error => {
+            console.error('Error updating employee data:', error); // Log any errors
+            alert('Error updating profile: ' + error.message); // Notify the user of the error
+        });
 });
 
 // Handle change password
@@ -381,26 +360,25 @@ document.getElementById('changePasswordForm').addEventListener('submit', functio
         headers: getAuthHeaders(),
         body: JSON.stringify({ currentPassword, newPassword })
     })
-    .then(response => {
-        if (!response.ok) {
-            return response.text().then(text => {
-                throw new Error(`Failed to change password: ${text}`); // Log the response text for debugging
-            });
-        }
-        return response.text(); // Change this to text() if the server returns plain text
-    })
-    .then(message => {
-        alert(message); // Display the message returned from the server
-        $('#changePasswordModal').modal('hide'); // Hide the modal after successful update
-    })
-    .catch(error => {
-        console.error('Error changing password:', error);
-        alert('Error changing password: ' + error.message);
-    });
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Failed to change password: ${text}`); // Log the response text for debugging
+                });
+            }
+            return response.text(); // Change this to text() if the server returns plain text
+        })
+        .then(message => {
+            alert(message); // Display the message returned from the server
+            $('#changePasswordModal').modal('hide'); // Hide the modal after successful update
+        })
+        .catch(error => {
+            console.error('Error changing password:', error);
+            alert('Error changing password: ' + error.message);
+        });
 });
 
 // Leave Management Functions
-
 // Function to load leave balances
 async function loadLeaveBalances() {
     try {
@@ -421,21 +399,75 @@ async function loadLeaveBalances() {
 }
 
 const displayLeaveBalances = (leaveBalances) => {
-    const leaveBalanceBody = document.getElementById('leaveBalanceBody');
-    leaveBalanceBody.innerHTML = ''; // Clear previous balances
+    const defaultAllocatedDays = 21;
 
-    for (const [leaveType, balance] of Object.entries(leaveBalances)) {
-        const row = document.createElement('tr');
-        const type = leaveType.split(' ')[0]; // Extracting the leave type (e.g., "Sick")
-        row.innerHTML = `
-            <td>${type} Leave</td>
-            <td>21</td> <!-- Assuming 21 days allocated -->
-            <td>${balance}</td>
-        `;
-        leaveBalanceBody.appendChild(row);
-    }
+    // Function to determine the color based on usage percentage
+    const getProgressBarColor = (used, total) => {
+        const percentageUsed = (used / total) * 100;
+        if (percentageUsed <= 50) {
+            return 'bg-success'; // Green
+        } else if (percentageUsed <= 80) {
+            return 'bg-warning'; // Yellow
+        } else {
+            return 'bg-danger'; // Red
+        }
+    };
+
+    // Update Sick Leave
+    const sickLeaveUsed = defaultAllocatedDays - leaveBalances["Sick Leave Balance"];
+    const sickLeaveRemaining = leaveBalances["Sick Leave Balance"];
+    const sickLeaveProgress = (sickLeaveUsed / defaultAllocatedDays) * 100;
+
+    document.getElementById('sickLeaveAllocated').textContent = defaultAllocatedDays;
+    document.getElementById('sickLeaveRemaining').textContent = sickLeaveRemaining;
+    const sickLeaveColor = getProgressBarColor(sickLeaveUsed, defaultAllocatedDays);
+    const sickLeaveProgressBar = document.getElementById('sickLeaveProgress');
+    sickLeaveProgressBar.style.width = `${sickLeaveProgress}%`;
+    sickLeaveProgressBar.setAttribute('aria-valuenow', sickLeaveProgress);
+    sickLeaveProgressBar.className = `progress-bar ${sickLeaveColor}`; // Set color class
+
+    // Update Vacation Leave
+    const vacationLeaveUsed = defaultAllocatedDays - leaveBalances["Vacation Leave Balance"];
+    const vacationLeaveRemaining = leaveBalances["Vacation Leave Balance"];
+    const vacationLeaveProgress = (vacationLeaveUsed / defaultAllocatedDays) * 100;
+
+    document.getElementById('vacationLeaveAllocated').textContent = defaultAllocatedDays;
+    document.getElementById('vacationLeaveRemaining').textContent = vacationLeaveRemaining;
+    const vacationLeaveColor = getProgressBarColor(vacationLeaveUsed, defaultAllocatedDays);
+    const vacationLeaveProgressBar = document.getElementById('vacationLeaveProgress');
+    vacationLeaveProgressBar.style.width = `${vacationLeaveProgress}%`;
+    vacationLeaveProgressBar.setAttribute('aria-valuenow', vacationLeaveProgress);
+    vacationLeaveProgressBar.className = `progress-bar ${vacationLeaveColor}`; // Set color class
+
+    // Update Paternity Leave
+    const paternityLeaveUsed = defaultAllocatedDays - leaveBalances["Paternity Leave Balance"];
+    const paternityLeaveRemaining = leaveBalances["Paternity Leave Balance"];
+    const paternityLeaveProgress = (paternityLeaveUsed / defaultAllocatedDays) * 100;
+
+    document.getElementById('paternityLeaveAllocated').textContent = defaultAllocatedDays;
+    document.getElementById('paternityLeaveRemaining').textContent = paternityLeaveRemaining;
+    const paternityLeaveColor = getProgressBarColor(paternityLeaveUsed, defaultAllocatedDays);
+    const paternityLeaveProgressBar = document.getElementById('paternityLeaveProgress');
+    paternityLeaveProgressBar.style.width = `${paternityLeaveProgress}%`;
+    paternityLeaveProgressBar.setAttribute('aria-valuenow', paternityLeaveProgress);
+    paternityLeaveProgressBar.className = `progress-bar ${paternityLeaveColor}`; // Set color class
+
+    // Update Compassionate Leave
+    const compassionateLeaveUsed = defaultAllocatedDays - leaveBalances["Compassionate Leave Balance"];
+    const compassionateLeaveRemaining = leaveBalances["Compassionate Leave Balance"];
+    const compassionateLeaveProgress = (compassionateLeaveUsed / defaultAllocatedDays) * 100;
+
+    document.getElementById('compassionateLeaveAllocated').textContent = defaultAllocatedDays;
+    document.getElementById('compassionateLeaveRemaining').textContent = compassionateLeaveRemaining;
+    const compassionateLeaveColor = getProgressBarColor(compassionateLeaveUsed, defaultAllocatedDays);
+    const compassionateLeaveProgressBar = document.getElementById('compassionateLeaveProgress');
+    compassionateLeaveProgressBar.style.width = `${compassionateLeaveProgress}%`;
+    compassionateLeaveProgressBar.setAttribute('aria-valuenow', compassionateLeaveProgress);
+    compassionateLeaveProgressBar.className = `progress-bar ${compassionateLeaveColor}`; // Set color class
 };
 
+// Call loadLeaveBalances on page load to display current leave balances
+document.addEventListener('DOMContentLoaded', loadLeaveBalances);
 // Function to load leave history
 async function loadLeaveHistory() {
     try {
@@ -477,6 +509,13 @@ const displayLeaveHistory = (leaveHistory) => {
         leaveHistoryBody.appendChild(row);
     });
 };
+
+// Set today's date as the minimum date for leave request
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+    document.getElementById('startDate').setAttribute('min', today);
+    document.getElementById('endDate').setAttribute('min', today);
+});
 
 // Validate leave request form
 const validateLeaveRequest = (leaveRequest) => {
@@ -524,6 +563,14 @@ document.getElementById('leaveRequestForm').addEventListener('submit', async (e)
     const isValid = validateLeaveRequest(leaveRequest);
     if (!isValid) {
         return; // Stop submission if validation fails
+    }
+
+    // Calculate the number of days taken
+    const daysTaken = Math.ceil((new Date(leaveRequest.endDate) - new Date(leaveRequest.startDate)) / (1000 * 3600 * 24)) + 1; // Include end date
+    const allocatedDays = 21; // This should be fetched from the server based on leave type
+    if (daysTaken > allocatedDays) {
+        document.getElementById('startDateError').textContent = `You cannot exceed the allocated ${allocatedDays} days.`;
+        return; // Stop submission if days exceed allocated
     }
 
     try {
@@ -589,6 +636,14 @@ document.getElementById('editLeaveRequestForm').addEventListener('submit', async
         return; // Stop submission if validation fails
     }
 
+    // Calculate the number of days taken
+    const daysTaken = Math.ceil((new Date(updatedLeaveRequest.endDate) - new Date(updatedLeaveRequest.startDate)) / (1000 * 3600 * 24)) + 1; // Include end date
+    const allocatedDays = 21; // This should be fetched from the server based on leave type
+    if (daysTaken > allocatedDays) {
+        document.getElementById('startDateError').textContent = `You cannot exceed the allocated ${allocatedDays} days.`;
+        return; // Stop submission if days exceed allocated
+    }
+
     try {
         const response = await fetch(`${BASE_URL}/api/leaves/${leaveId}`, {
             method: 'PUT',
@@ -601,12 +656,20 @@ document.getElementById('editLeaveRequestForm').addEventListener('submit', async
 
         if (!response.ok) throw new Error('Failed to update leave request');
         alert("Leave request updated successfully!");
-        loadLeaveHistory(); // Refresh the leave history
-        hideEditLeaveRequestModal(); // Hide the modal after successful update
+
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editLeaveRequestModal'));
+        modal.hide(); // Hide the modal
+
+        // Refresh the leave history and balances
+        await loadLeaveHistory(); // Refresh the leave history
+        await loadLeaveBalances(); // Refresh leave balances to reflect any changes
     } catch (error) {
         console.error("Error updating leave request:", error);
+        alert("An error occurred while updating the leave request. Please try again.");
     }
 });
+
 
 // Task Management Functions
 
@@ -821,18 +884,24 @@ function viewTaskDetails(taskId) {
         $('#taskViewModal').modal('show'); // Show the modal
     });
 }
+
 // Finance Management
-//Function to handle the submission of the requisition form
+// Set up date validation for requisition and claim forms
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+
+    // Set min date for requisition (today or later)
+    document.getElementById('dateSubmitted').setAttribute('min', today);
+
+    // Set max date for claim (today or earlier)
+    document.getElementById('claimDateSubmitted').setAttribute('max', today);
+});
+
+// Function to handle the submission of the requisition form
 document.getElementById('requisition-form').addEventListener('submit', async function(event) {
     event.preventDefault(); // Prevent the default form submission
 
     const formData = new FormData(this); // Create a FormData object from the form
-    const file = document.getElementById('file').files[0]; // Get the file input
-
-    // Add file to FormData
-    if (file) {
-        formData.append('file', file);
-    }
 
     try {
         const response = await fetch('/api/finances/requisition', {
@@ -843,16 +912,18 @@ document.getElementById('requisition-form').addEventListener('submit', async fun
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to submit requisition');
+            displayError('requisitionDateError', errorData.error || 'Failed to submit requisition');
+            return;
         }
 
         alert('Requisition submitted successfully!');
         this.reset(); // Reset the form
+        $('#requisitionModal').modal('hide'); // Close the requisition modal
         fetchFinanceRecords(); // Refresh the finance records table
         fetchFinanceHistory(); // Refresh the finance history table
     } catch (error) {
         console.error('Error:', error);
-        alert('Error submitting requisition: ' + error.message);
+        displayError('requisitionDateError', 'Error submitting requisition: ' + error.message);
     }
 });
 
@@ -861,12 +932,6 @@ document.getElementById('claim-form').addEventListener('submit', async function(
     event.preventDefault(); // Prevent the default form submission
 
     const formData = new FormData(this); // Create a FormData object from the form
-    const file = document.getElementById('claimFile').files[0]; // Get the file input
-
-    // Add file to FormData
-    if (file) {
-        formData.append('file', file);
-    }
 
     try {
         const response = await fetch('/api/finances/claim', {
@@ -877,20 +942,28 @@ document.getElementById('claim-form').addEventListener('submit', async function(
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to submit claim');
+            displayError('claimDateError', errorData.error || 'Failed to submit claim');
+            return;
         }
 
         alert('Claim submitted successfully!');
         this.reset(); // Reset the form
+        $('#claimModal').modal('hide'); // Close the claim modal
         fetchFinanceRecords(); // Refresh the finance records table
         fetchFinanceHistory(); // Refresh the finance history table
     } catch (error) {
         console.error('Error:', error);
-        alert('Error submitting claim: ' + error.message);
+        displayError('claimDateError', 'Error submitting claim: ' + error.message);
     }
 });
 
-// Fetch and display finance records
+// Function to display error messages
+function displayError(elementId, message) {
+    const errorElement = document.getElementById(elementId);
+    errorElement.textContent = message; // Set the error message
+}
+
+// Function to fetch and display finance records
 async function fetchFinanceRecords() {
     try {
         const response = await fetch('/api/finances/me', {
@@ -910,7 +983,7 @@ async function fetchFinanceRecords() {
             row.innerHTML = `
                 <td>${finance.type}</td>
                 <td>${finance.purpose || finance.expenseType || '-'}</td>
-                <td>$${parseFloat(finance.amount).toFixed(2)}</td>
+                <td>${parseFloat(finance.amount).toFixed(2)} KES</td>
                 <td>${new Date(finance.dateSubmitted).toLocaleDateString()}</td> <!-- Display the date -->
                 <td>
                     <span class="status-badge ${finance.status.toLowerCase()}">
@@ -918,9 +991,7 @@ async function fetchFinanceRecords() {
                     </span>
                 </td>
                 <td>
-                    <button onclick="downloadFinanceFile('${finance.financeId}')" class="download-button">
-                        Download
-                    </button>
+                    ${finance.type === 'Claim' ? `<button onclick="downloadFinanceFile('${finance.financeId}')" class="download-button">Download</button>` : ''}
                 </td>
             `;
             recordsBody.appendChild(row);
@@ -931,46 +1002,6 @@ async function fetchFinanceRecords() {
     }
 }
 
-// Fetch and display finance history
-async function fetchFinanceHistory() {
-    try {
-        const response = await fetch('/api/finances/me/history', {
-            headers: getAuthHeaders() // Use the getAuthHeaders function
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch finance history');
-        }
-
-        const history = await response.json();
-        const historyBody = document.getElementById('finance-history-body');
-        historyBody.innerHTML = ''; // Clear previous history
-
-        history.forEach(finance => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${finance.type}</td>
-                <td>${finance.purpose || finance.expenseType || '-'}</td>
-                <td>$${parseFloat(finance.amount).toFixed(2)}</td>
-                <td>${new Date(finance.dateSubmitted).toLocaleDateString()}</td>
-                <td>
-                    <span class="status-badge ${finance.status.toLowerCase()}">
-                        ${finance.status}
-                    </span>
-                </td>
-                <td>
-                    <button onclick="downloadFinanceFile('${finance.financeId}')" class="download-button">
-                        Download
-                    </button>
-                </td>
-            `;
-            historyBody.appendChild(row);
-        });
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error fetching finance history: ' + error.message);
-    }
-}
 // Function to download the supporting document associated with a finance record
 function downloadFinanceFile(financeId) {
     fetch(`/api/finances/${financeId}/download`, {

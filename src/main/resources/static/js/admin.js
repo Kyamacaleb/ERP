@@ -5,19 +5,32 @@ function getAuthHeaders() {
         console.error('No JWT found in local storage.');
         return {};
     }
-    console.log('JWT:', token); // Log the JWT to see if it's retrieved correctly
-    const decodedToken = jwt_decode(token); // Decode JWT to extract payload
-    const employeeId = decodedToken.employeeId; // Store employeeId globally
 
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`, // Include the JWT in the Authorization header
-        'X-Employee-Id': employeeId // Include employeeId as a custom header
-    };
+    console.log('JWT:', token); // Log the JWT to see if it's retrieved correctly
+
+    try {
+        const decodedToken = jwt_decode(token); // Decode JWT to extract payload
+        console.log('Decoded Token:', decodedToken); // Log the decoded token
+
+        const employeeId = decodedToken.employeeId; // Store employeeId globally
+        if (!employeeId) {
+            console.error('Employee ID is not found in the decoded token.');
+            return {};
+        }
+
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`, // Include the JWT in the Authorization header
+            'X-Employee-Id': employeeId, // Include employeeId as a custom header
+            employeeId // Return employeeId for use in other functions
+        };
+    } catch (error) {
+        console.error('Error decoding JWT:', error);
+        return {};
+    }
 }
 
-
-const BASE_URL = 'http://localhost:8080/api'; // Adjust the base URL as needed
+const BASE_URL = 'http://localhost:8082/api'; // Adjust the base URL as needed
 
 async function fetchOverviewData() {
     try {
@@ -57,6 +70,7 @@ async function fetchOverviewData() {
         alert('Error fetching overview data: ' + error.message);
     }
 }
+
 function showCreateEmployeeForm() {
     resetForm(); // Reset the form fields when showing the form
     const createEmployeeFormContainer = document.getElementById('createEmployeeFormContainer');
@@ -67,6 +81,7 @@ function showCreateEmployeeForm() {
         createEmployeeFormContainer.classList.add('hidden'); // Hide the form
     }
 }
+
 // Function to create an employee
 async function createEmployee() {
     const employeeData = {
@@ -77,6 +92,9 @@ async function createEmployee() {
         role: document.getElementById('employeeRole').value,
         phoneNumber: document.getElementById('employeePhoneNumber').value,
         department: document.getElementById('employeeDepartment').value,
+        dateOfJoining: document.getElementById('employeeJoiningDate').value, // New field
+        emergencyContactName: document.getElementById('emergencyContactName').value, // New field
+        emergencyContactPhone: document.getElementById('emergencyContactNumber').value // Updated field name
     };
 
     try {
@@ -119,6 +137,8 @@ async function createContact(employeeId) {
         email: document.getElementById('employeeEmail').value,
         phoneNumber: document.getElementById('employeePhoneNumber').value,
         department: document.getElementById('employeeDepartment').value,
+        emergencyContactName: document.getElementById('emergencyContactName').value, // New field
+        emergencyContactPhone: document.getElementById('emergencyContactNumber').value // New field
     };
 
     try {
@@ -167,13 +187,17 @@ async function getAllEmployees() {
         console.error('Error fetching employees for table:', error);
     }
 }
-
 // Function to populate the employee table
 function populateEmployeeTable(employees) {
     const employeeTableBody = document.getElementById('employeeTableBody');
     employeeTableBody.innerHTML = ''; // Clear existing rows
 
     employees.forEach(employee => {
+        // Exclude the default admin account
+        if (employee.email === "admin@example.com") {
+            return; // Skip this iteration
+        }
+
         const statusClass = employee.active ? 'text-success' : 'text-danger'; // Use Bootstrap classes for coloring
         const statusText = employee.active ? 'Active' : 'Inactive';
 
@@ -184,6 +208,9 @@ function populateEmployeeTable(employees) {
             <td>${employee.role}</td>
             <td>${employee.phoneNumber}</td>
             <td>${employee.department}</td>
+            <td>${employee.dateOfJoining}</td> <!-- New field -->
+            <td>${employee.emergencyContactName}</td> <!-- New field -->
+            <td>${employee.emergencyContactPhone}</td> <!-- New field -->
             <td class="${statusClass}">${statusText}</td> <!-- Apply status class -->
             <td>
                 <button class="btn btn-warning" onclick="editEmployee('${employee.employeeId}')">Edit</button>
@@ -196,6 +223,7 @@ function populateEmployeeTable(employees) {
 
 // Function to edit an employee
 async function editEmployee(empId) {
+    console.log('Editing employee with ID:', empId); // Debugging log
     try {
         const response = await fetch(`${BASE_URL}/employees/${empId}`, {
             method: 'GET',
@@ -207,18 +235,21 @@ async function editEmployee(empId) {
         }
 
         const employee = await response.json();
-        // Populate the form with the employee's current details
-        document.getElementById('employeeName').value = employee.firstName;
-        document.getElementById('employeeLastName').value = employee.lastName;
-        document.getElementById('employeeEmail').value = employee.email;
-        document.getElementById('employeeRole').value = employee.role;
-        document.getElementById('employeePhoneNumber').value = employee.phoneNumber;
-        document.getElementById('employeeDepartment').value = employee.department;
+        console.log('Fetched Employee:', employee); // Debugging log
 
-        // Change the button to update instead of create
-        const createButton = document.querySelector('#createEmployeeForm button');
-        createButton.innerText = 'Update Employee';
-        createButton.setAttribute('onclick', `updateEmployee('${empId}')`); // Update the button's onclick to call updateEmployee
+        // Populate the form with the employee's current details
+        document.getElementById('updateEmployeeName').value = employee.firstName;
+        document.getElementById('updateEmployeeLastName').value = employee.lastName;
+        document.getElementById('updateEmployeePhoneNumber').value = employee.phoneNumber;
+        document.getElementById('updateEmergencyContactName').value = employee.emergencyContactName;
+        document.getElementById('updateEmergencyContactNumber').value = employee.emergencyContactPhone;
+        document.getElementById('updateEmployeeDepartment').value = employee.department;
+
+        // Store the employee ID in a hidden field or a global variable
+        window.currentEmployeeId = empId; // Store the employee ID globally
+
+        // Show the update modal
+        $('#updateEmployeeModal').modal('show'); // Using jQuery to show the modal
     } catch (error) {
         console.error('Error fetching employee details:', error);
         alert('Error fetching employee details: ' + error.message);
@@ -226,14 +257,15 @@ async function editEmployee(empId) {
 }
 
 // Function to update an employee
-async function updateEmployee(empId) {
+async function updateEmployee() {
+    const empId = window.currentEmployeeId; // Get the employee ID from the global variable
     const employeeData = {
-        firstName: document.getElementById('employeeName').value,
-        lastName: document.getElementById('employeeLastName').value,
-        email: document.getElementById('employeeEmail').value,
-        role: document.getElementById('employeeRole').value,
-        phoneNumber: document.getElementById('employeePhoneNumber').value,
-        department: document.getElementById('employeeDepartment').value,
+        firstName: document.getElementById('updateEmployeeName').value,
+        lastName: document.getElementById('updateEmployeeLastName').value,
+        phoneNumber: document.getElementById('updateEmployeePhoneNumber').value,
+        emergencyContactName: document.getElementById('updateEmergencyContactName').value,
+        emergencyContactPhone: document.getElementById('updateEmergencyContactNumber').value,
+        department: document.getElementById('updateEmployeeDepartment').value
     };
 
     try {
@@ -249,15 +281,19 @@ async function updateEmployee(empId) {
         }
 
         const updatedEmployee = await response.json();
-        console.log('Employee updated:', updatedEmployee);
         alert('Employee updated successfully!');
-        resetForm(); // Reset the form after updating
+        $('#updateEmployeeModal').modal('hide'); // Hide the modal after updating
         getAllEmployees(); // Refresh the employee list
-        fetchOverviewData(); // Add this line to update the overview
+        fetchOverviewData(); // Update the overview
     } catch (error) {
         console.error('Error updating employee:', error);
         alert('Error updating employee: ' + error.message);
     }
+}
+
+// Function to close the update modal
+function closeUpdateModal() {
+    $('#updateEmployeeModal').modal('hide'); // Hide the modal
 }
 
 async function deactivateEmployee(empId) {
@@ -326,7 +362,6 @@ function populateContactCards(contacts) {
         contactCardsContainer.appendChild(card);
     });
 }
-
 
 // Logout function
 function logout() {
@@ -1026,9 +1061,80 @@ function openCreateTaskModal() {
 }
 
 
+        //NOTIFICATIONS
+// Function to fetch notifications
+async function fetchNotifications() {
+    try {
+        const headers = getAuthHeaders(); // Get the headers including employeeId
+        const employeeId = headers.employeeId; // Extract employeeId from headers
+
+        // Determine if the user is an admin
+        const response = await fetch(`${BASE_URL}/notifications/admin`, {
+            method: 'GET',
+            headers: headers // Use the headers with employeeId
+        });
+
+        if (!response.ok) {
+            // If the user is not an admin, try fetching employee notifications
+            const employeeResponse = await fetch(`${BASE_URL}/notifications/employee`, {
+                method: 'GET',
+                headers: headers
+            });
+
+            if (!employeeResponse.ok) {
+                throw new Error('Failed to fetch notifications');
+            }
+
+            const notifications = await employeeResponse.json();
+            populateNotificationTable(notifications);
+        } else {
+            const notifications = await response.json();
+            populateNotificationTable(notifications);
+        }
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+    }
+}
+
+// Function to populate the notification table
+function populateNotificationTable(notifications) {
+    const notificationTableBody = document.getElementById('notificationTableBody');
+    notificationTableBody.innerHTML = ''; // Clear existing rows
+
+    notifications.forEach(notification => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+                <td>${notification.message}</td>
+                <td>${new Date(notification.dateSent).toLocaleString()}</td>
+                <td>${notification.readStatus ? 'Read' : 'Unread'}</td>
+                <td>
+                    <button class="btn btn-primary" onclick="markAsRead('${notification.notificationId}')">Mark as Read</button>
+                </td>
+            `;
+        notificationTableBody.appendChild(row);
+    });
+
+    // Update notification count
+    document.getElementById('notificationCount').innerText = notifications.length;
+}
+
+// Function to mark a notification as read
+async function markAsRead(notificationId) {
+    try {
+        await fetch(`${BASE_URL}/notifications/mark-as-read/${notificationId}`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+        });
+        fetchNotifications(); // Refresh notifications after marking as read
+    } catch (error) {
+        console.error('Error marking notification as read:', error);
+    }
+}
+
 // Call the fetchOverviewData function when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     fetchOverviewData();
+    fetchNotifications(); // Fetch notifications on page load
     populateEmployeeDropdown(); // Populate the employee dropdown
     fetchAdminFinanceRecords(); // Fetch and display all finance records
     fetchFinanceHistory(); // Fetch and display finance history
