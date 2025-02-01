@@ -381,22 +381,29 @@ document.getElementById('createEmployeeForm').addEventListener('submit', functio
 async function fetchAdminFinanceRecords() {
     try {
         const response = await fetch(`${BASE_URL}/finances`, {
-            headers: getAuthHeaders() // Use the getAuthHeaders function
+            headers: getAuthHeaders()
         });
 
         if (!response.ok) {
             throw new Error('Failed to fetch finance records');
         }
 
-        const finances = await response.json();
+        const allFinances = await response.json();
+
+        // Filter active records (e.g., Pending, Recalled)
+        const activeFinances = allFinances.filter(finance =>
+            finance.status === 'Pending'
+        );
+
         const recordsBody = document.getElementById('admin-finance-records-body');
         recordsBody.innerHTML = ''; // Clear existing rows
 
-        finances.forEach(finance => {
+        activeFinances.forEach(finance => {
             const row = createFinanceRecordRow(finance);
             recordsBody.appendChild(row);
         });
-        fetchOverviewData(); // Add this line to update the overview
+
+        fetchOverviewData(); // Update the overview
     } catch (error) {
         console.error('Error:', error);
         alert('Error fetching finance records: ' + error.message);
@@ -406,10 +413,10 @@ async function fetchAdminFinanceRecords() {
 // Create a row for finance record
 function createFinanceRecordRow(finance) {
     const row = document.createElement('tr');
-    row.setAttribute('data-finance-id', finance.financeId); // Set data attribute for easy access
+    row.setAttribute('data-finance-id', finance.financeId);
 
-    // Check if the record is deleted
-    const isDeleted = finance.isDeleted; // Assuming you have this property in the finance object
+    const isDeleted = finance.isDeleted;
+    const isRequisition = finance.type === 'Requisition'; // Check if it's a requisition
 
     row.innerHTML = `
         <td>${finance.type}</td>
@@ -429,18 +436,16 @@ function createFinanceRecordRow(finance) {
                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     <button class="dropdown-item" onclick="handleAdminAction('${finance.financeId}', 'approve')" ${isDeleted ? 'disabled' : ''}>Approve</button>
                     <button class="dropdown-item" onclick="handleAdminAction('${finance.financeId}', 'reject')" ${isDeleted ? 'disabled' : ''}>Reject</button>
-                    <button class="dropdown-item" onclick="handleAdminAction('${finance.financeId}', 'recall')" ${isDeleted ? 'disabled' : ''}>Recall</button>
                     <button class="dropdown-item" onclick="handleAdminAction('${finance.financeId}', 'delete')">Delete</button>
-                    <button class="dropdown-item" onclick="downloadFinanceFile('${finance.financeId}')">Download</button>
+                    ${!isRequisition ? `<button class="dropdown-item" onclick="downloadFinanceFile('${finance.financeId}')">Download</button>` : ''}
                 </div>
             </div>
         </td>
     `;
 
-    // Optionally, you can visually indicate that the record is deleted
     if (isDeleted) {
-        row.style.textDecoration = 'line-through'; // Strikethrough effect
-        row.style.color = 'gray'; // Optional: Change text color
+        row.style.textDecoration = 'line-through';
+        row.style.color = 'gray';
     }
 
     return row;
@@ -450,18 +455,24 @@ function createFinanceRecordRow(finance) {
 async function fetchFinanceHistory() {
     try {
         const response = await fetch(`${BASE_URL}/finances`, {
-            headers: getAuthHeaders() // Use the getAuthHeaders function
+            headers: getAuthHeaders()
         });
 
         if (!response.ok) {
             throw new Error('Failed to fetch finance history');
         }
 
-        const history = await response.json();
+        const allFinances = await response.json();
+
+        // Filter historical records (e.g., Approved, Rejected, Deleted)
+        const historicalFinances = allFinances.filter(finance =>
+            finance.status === 'Approved' || finance.status === 'Rejected' || finance.status === 'Deleted'
+        );
+
         const historyBody = document.getElementById('finance-history-body');
         historyBody.innerHTML = ''; // Clear previous history
 
-        history.forEach(finance => {
+        historicalFinances.forEach(finance => {
             const row = createFinanceHistoryRow(finance);
             historyBody.appendChild(row);
         });
@@ -474,6 +485,8 @@ async function fetchFinanceHistory() {
 // Create a row for finance history
 function createFinanceHistoryRow(finance) {
     const row = document.createElement('tr');
+    const isRequisition = finance.type === 'Requisition'; // Check if it's a requisition
+
     row.innerHTML = `
         <td>${finance.type}</td>
         <td>${finance.purpose || finance.expenseType || '-'}</td>
@@ -485,7 +498,7 @@ function createFinanceHistoryRow(finance) {
             </span>
         </td>
         <td>
-            <button onclick="downloadFinanceFile('${finance.financeId}')" class="btn btn-primary">Download</button>
+            ${!isRequisition ? `<button onclick="downloadFinanceFile('${finance.financeId}')" class="btn btn-primary">Download</button>` : ''}
         </td>
     `;
     return row;
@@ -519,12 +532,6 @@ async function handleAdminAction(financeId, action) {
             }
 
             alert(`Finance record deleted successfully!`);
-            const recordRow = document.querySelector(`#admin-finance-records-body tr[data-finance-id="${financeId}"]`);
-            if (recordRow) {
-                recordRow.remove(); // Remove from admin records
-            }
-
-            fetchDeletedFinanceRecords(); // Refresh the deleted records table
         } else {
             // Check if the record is already approved or rejected
             if (action === 'approve' && financeRecord.status === 'Approved') {
@@ -550,27 +557,12 @@ async function handleAdminAction(financeId, action) {
                 throw new Error(`Failed to ${action} finance record`);
             }
 
-            alert(`Finance record ${action}d successfully!`);
-
-            // Update the status in the UI
-            const recordRow = document.querySelector(`#admin-finance-records-body tr[data-finance-id="${financeId}"]`);
-            if (recordRow) {
-                const statusBadge = recordRow.querySelector('.status-badge');
-                if (action === 'reject') {
-                    statusBadge.textContent = 'Rejected';
-                    statusBadge.className = 'status-badge rejected'; // Update class for styling
-                } else if (action === 'approve') {
-                    statusBadge.textContent = 'Approved';
-                    statusBadge.className = 'status-badge approved'; // Update class for styling
-                } else if (action === 'recall') {
-                    statusBadge.textContent = 'Recalled';
-                    statusBadge.className = 'status-badge recalled'; // Update class for styling
-                }
-            }
+            alert(`Finance record ${action} successfully!`);
         }
 
-        fetchAdminFinanceRecords(); // Refresh the admin finance records table
-        fetchFinanceHistory(); // Refresh the finance history table if needed
+        // Refresh both tables after the action
+        await fetchAdminFinanceRecords();
+        await fetchFinanceHistory();
     } catch (error) {
         console.error('Error:', error);
         alert(`Error during admin action: ${error.message}`);
@@ -605,6 +597,8 @@ async function fetchDeletedFinanceRecords() {
 // Create a row for deleted finance record
 function createDeletedFinanceRecordRow(finance) {
     const row = document.createElement('tr');
+    const isRequisition = finance.type === 'Requisition'; // Check if it's a requisition
+
     row.innerHTML = `
         <td>${finance.type}</td>
         <td>${finance.purpose || finance.expenseType || '-'}</td>
@@ -617,6 +611,7 @@ function createDeletedFinanceRecordRow(finance) {
         </td>
         <td>
             <button onclick="restoreFinanceRecord('${finance.financeId}')" class="btn btn-primary">Restore</button>
+            ${!isRequisition ? `<button onclick="downloadFinanceFile('${finance.financeId}')" class="btn btn-secondary">Download</button>` : ''}
         </td>
     `;
     row.style.textDecoration = 'line-through'; // Strikethrough effect
@@ -640,14 +635,30 @@ async function restoreFinanceRecord(financeId) {
         }
 
         alert('Finance record restored successfully!');
-        fetchDeletedFinanceRecords(); // Refresh the deleted records table
-        fetchAdminFinanceRecords(); // Refresh the admin finance records table
+
+        // Fetch the updated record to determine where it should go
+        const financeResponse = await fetch(`${BASE_URL}/finances/${financeId}`, {
+            headers: getAuthHeaders()
+        });
+
+        if (!financeResponse.ok) {
+            throw new Error('Failed to fetch restored finance record');
+        }
+
+        const financeRecord = await financeResponse.json();
+
+        if (financeRecord.status === 'Pending' || financeRecord.status === 'Recalled') {
+            await fetchAdminFinanceRecords(); // Refresh the admin finance records table
+        } else {
+            await fetchFinanceHistory(); // Refresh the finance history table
+        }
+
+        await fetchDeletedFinanceRecords(); // Refresh the deleted records table
     } catch (error) {
         console.error('Error:', error);
         alert('Error restoring finance record: ' + error.message);
     }
 }
-
 // Function to download the supporting document associated with a finance record
 function downloadFinanceFile(financeId) {
     fetch(`${BASE_URL}/finances/${financeId}/download`, {
@@ -678,7 +689,7 @@ function downloadFinanceFile(financeId) {
                 //LEAVE
 // Function to fetch and display all leave requests
 function fetchLeaveRequests() {
-    fetch(`${BASE_URL}/leaves`, {
+    fetch(`${BASE_URL}/leaves`, { // Fetch all leave requests
         method: 'GET',
         headers: getAuthHeaders()
     })
@@ -689,33 +700,35 @@ function fetchLeaveRequests() {
             return response.json();
         })
         .then(leaves => {
+            console.log('Fetched leave requests:', leaves); // Debugging: Check fetched data
             const leaveTableBody = document.getElementById('leaveTableBody');
             leaveTableBody.innerHTML = ''; // Clear existing rows
 
-            leaves.forEach(leave => {
+            // Filter leave requests to show only those with a 'Pending' status
+            const pendingLeaves = leaves.filter(leave => leave.status === 'Pending');
+            console.log('Pending leave requests:', pendingLeaves); // Debugging: Check filtered data
+
+            pendingLeaves.forEach(leave => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                <td>${leave.employeeName}</td>
-                <td>${leave.leaveType}</td>
-                <td>${leave.startDate}</td>
-                <td>${leave.endDate}</td>
-                <td>${leave.status}</td>
-                <td>
-                    <button class="btn btn-success" onclick="approveLeave('${leave.leaveId}')">Approve</button>
-                    <button class="btn btn-danger" onclick="rejectLeave('${leave.leaveId}')">Reject</button>
-                    <button class="btn btn-warning" onclick="recallLeave('${leave.leaveId}')">Recall</button> <!-- Recall Button -->
-                </td>
-            `;
+                    <td>${leave.employeeName}</td>
+                    <td>${leave.leaveType}</td>
+                    <td>${leave.startDate}</td>
+                    <td>${leave.endDate}</td>
+                    <td>${leave.status}</td>
+                    <td>
+                        <button class="btn btn-success" onclick="approveLeave('${leave.leaveId}')">Approve</button>
+                        <button class="btn btn-danger" onclick="rejectLeave('${leave.leaveId}')">Reject</button>
+                    </td>
+                `;
                 leaveTableBody.appendChild(row);
             });
-            fetchOverviewData(); // Add this line to update the overview
         })
         .catch(error => console.error('Error fetching leave records:', error));
 }
-
 // Function to fetch and display leave history
 function fetchLeaveHistory() {
-    fetch(`${BASE_URL}/leaves/history`, { // Updated endpoint to fetch all leave history
+    fetch(`${BASE_URL}/leaves/history`, { // Fetch all leave history
         method: 'GET',
         headers: getAuthHeaders()
     })
@@ -725,20 +738,29 @@ function fetchLeaveHistory() {
             }
             return response.json();
         })
-        .then(history => {
+        .then(leaves => {
             const leaveHistoryTableBody = document.getElementById('leaveHistoryTableBody');
             leaveHistoryTableBody.innerHTML = ''; // Clear existing rows
 
-            history.forEach(leave => {
+            // Filter leave requests to exclude those with a 'pending' status
+            const historyLeaves = leaves.filter(leave => leave.status !== 'Pending');
+
+            historyLeaves.forEach(leave => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                <td>${leave.employeeName}</td> <!-- Changed from employeeId to employeeName -->
-                <td>${leave.leaveType}</td>
-                <td>${leave.startDate}</td>
-                <td>${leave.endDate}</td>
-                <td>${leave.status}</td>
-                <td>${leave.dateRequested || ''}</td> <!-- Assuming there's a dateRequested field -->
-            `;
+                    <td>${leave.employeeName}</td>
+                    <td>${leave.leaveType}</td>
+                    <td>${leave.startDate}</td>
+                    <td>${leave.endDate}</td>
+                    <td>${leave.status}</td>
+                    <td>${leave.dateRequested || ''}</td> <!-- Assuming there's a dateRequested field -->
+                    <td>
+                        ${leave.status === 'Approved' ?
+                    `<button class="btn btn-warning" onclick="recallLeave('${leave.leaveId}')">Recall</button>` :
+                    ''
+                } <!-- Recall Button -->
+                    </td>
+                `;
                 leaveHistoryTableBody.appendChild(row);
             });
         })
@@ -756,13 +778,12 @@ function approveLeave(leaveId) {
                 throw new Error('Network response was not ok');
             }
             console.log('Leave approved successfully');
-            fetchLeaveRequests(); // Refresh the leave requests list
+            fetchLeaveRequests(); // Refresh the pending leave requests list
             fetchLeaveHistory(); // Refresh the leave history list
         })
         .catch(error => console.error('Error approving leave request:', error));
 }
 
-// Function to reject a leave request
 function rejectLeave(leaveId) {
     fetch(`${BASE_URL}/leaves/${leaveId}/reject`, {
         method: 'PUT',
@@ -773,7 +794,7 @@ function rejectLeave(leaveId) {
                 throw new Error('Network response was not ok');
             }
             console.log('Leave rejected successfully');
-            fetchLeaveRequests(); // Refresh the leave requests list
+            fetchLeaveRequests(); // Refresh the pending leave requests list
             fetchLeaveHistory(); // Refresh the leave history list
         })
         .catch(error => console.error('Error rejecting leave request:', error));
@@ -790,12 +811,13 @@ function recallLeave(leaveId) {
                 throw new Error('Network response was not ok');
             }
             console.log('Leave recalled successfully');
-            fetchLeaveRequests(); // Refresh the leave requests list
+            fetchLeaveRequests(); // Refresh the pending leave requests list
             fetchLeaveHistory(); // Refresh the leave history list
         })
         .catch(error => console.error('Error recalling leave request:', error));
 }
 
+// Function to populate the employee dropdown
 async function populateEmployeeDropdown() {
     try {
         const response = await fetch(`${BASE_URL}/employees`, {
@@ -819,7 +841,7 @@ async function populateEmployeeDropdown() {
     }
 }
 
-        //TASK
+//TASK
 // Function to get all tasks (Admin only)
 async function getAllTasks() {
     try {
@@ -942,12 +964,21 @@ function populateUpdateForm(taskId) {
         })
         .catch(error => console.error('Error fetching task details for update:', error));
 }
+
 function updateTask(taskId) {
+    const dueDateInput = document.getElementById('dueDate').value;
+    const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+
+    if (dueDateInput < today) {
+        alert('Due date cannot be in the past. Please select a valid date.');
+        return; // Exit the function if the date is invalid
+    }
+
     const taskDetails = {
         taskName: document.getElementById('taskName').value,
         assignedTo: { employeeId: document.getElementById('assignedTo').value },
         description: document.getElementById('description').value,
-        dueDate: document.getElementById('dueDate').value,
+        dueDate: dueDateInput,
         status: document.getElementById('status').value,
         urgent: document.getElementById('urgent').checked
     };
@@ -975,6 +1006,7 @@ function updateTask(taskId) {
         })
         .catch(error => console.error('Error updating task:', error));
 }
+
 // Function to create a new task
 function createTask() {
     const taskDetails = {
@@ -1010,7 +1042,6 @@ function createTask() {
         })
         .catch(error => console.error('Error creating task:', error));
 }
-
 
 // Function to delete a task
 function deleteTask(taskId) {
@@ -1058,83 +1089,25 @@ function resetCreateTaskForm() {
 // Function to open the create task modal
 function openCreateTaskModal() {
     $('#createTaskForm').show(); // Show the create task form
+    setMinDueDate(); // Ensure the minimum date is set when opening the modal
 }
+
+// Set the minimum date for the due date input
+function setMinDueDate() {
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+    document.getElementById('dueDate').setAttribute('min', formattedDate);
+}
+
+// Call the function to set the minimum date when the page loads
+window.onload = setMinDueDate;
 
 
         //NOTIFICATIONS
-// Function to fetch notifications
-async function fetchNotifications() {
-    try {
-        const headers = getAuthHeaders(); // Get the headers including employeeId
-        const employeeId = headers.employeeId; // Extract employeeId from headers
-
-        // Determine if the user is an admin
-        const response = await fetch(`${BASE_URL}/notifications/admin`, {
-            method: 'GET',
-            headers: headers // Use the headers with employeeId
-        });
-
-        if (!response.ok) {
-            // If the user is not an admin, try fetching employee notifications
-            const employeeResponse = await fetch(`${BASE_URL}/notifications/employee`, {
-                method: 'GET',
-                headers: headers
-            });
-
-            if (!employeeResponse.ok) {
-                throw new Error('Failed to fetch notifications');
-            }
-
-            const notifications = await employeeResponse.json();
-            populateNotificationTable(notifications);
-        } else {
-            const notifications = await response.json();
-            populateNotificationTable(notifications);
-        }
-    } catch (error) {
-        console.error('Error fetching notifications:', error);
-    }
-}
-
-// Function to populate the notification table
-function populateNotificationTable(notifications) {
-    const notificationTableBody = document.getElementById('notificationTableBody');
-    notificationTableBody.innerHTML = ''; // Clear existing rows
-
-    notifications.forEach(notification => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-                <td>${notification.message}</td>
-                <td>${new Date(notification.dateSent).toLocaleString()}</td>
-                <td>${notification.readStatus ? 'Read' : 'Unread'}</td>
-                <td>
-                    <button class="btn btn-primary" onclick="markAsRead('${notification.notificationId}')">Mark as Read</button>
-                </td>
-            `;
-        notificationTableBody.appendChild(row);
-    });
-
-    // Update notification count
-    document.getElementById('notificationCount').innerText = notifications.length;
-}
-
-// Function to mark a notification as read
-async function markAsRead(notificationId) {
-    try {
-        await fetch(`${BASE_URL}/notifications/mark-as-read/${notificationId}`, {
-            method: 'POST',
-            headers: getAuthHeaders()
-        });
-        fetchNotifications(); // Refresh notifications after marking as read
-    } catch (error) {
-        console.error('Error marking notification as read:', error);
-    }
-}
 
 // Call the fetchOverviewData function when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     fetchOverviewData();
-    fetchNotifications(); // Fetch notifications on page load
     populateEmployeeDropdown(); // Populate the employee dropdown
     fetchAdminFinanceRecords(); // Fetch and display all finance records
     fetchFinanceHistory(); // Fetch and display finance history

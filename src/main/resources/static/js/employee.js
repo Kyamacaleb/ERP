@@ -9,17 +9,6 @@ function showEditLeaveRequestModal() {
     editLeaveRequestModal.show();
 }
 
-// Function to hide the modal
-function hideEditLeaveRequestModal() {
-    const modal = document.getElementById('editLeaveRequestModal');
-    modal.setAttribute('aria-hidden', 'true'); // Set aria-hidden to true when hiding the modal
-    const editLeaveRequestModal = bootstrap.Modal.getInstance(modal);
-    if (editLeaveRequestModal) {
-        editLeaveRequestModal.hide();
-    }
-}
-
-
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('Employee dashboard script loaded');
     try {
@@ -675,43 +664,39 @@ document.getElementById('editLeaveRequestForm').addEventListener('submit', async
 
 let currentTaskId; // Variable to hold the current task ID
 
-// Function to fetch all tasks and update the UI
+// Fetch all tasks and update the UI
 async function fetchTasks() {
+    const taskTableBody = document.getElementById('taskTableBody');
+    taskTableBody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner-border" role="status"></div></td></tr>';
+
     try {
         const response = await fetch(`${BASE_URL}/api/tasks`, {
             method: 'GET',
-            headers: getAuthHeaders() // Use the utility function to get headers
+            headers: getAuthHeaders()
         });
 
-        // Check if the response is OK (status code 200-299)
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // Parse the JSON response
         const tasks = await response.json();
-
-        // Check if tasks is an array
-        if (!Array.isArray(tasks)) {
-            throw new TypeError('Expected tasks to be an array');
-        }
-
-        // Update the UI with the fetched tasks
         populateTaskList(tasks);
         populateTaskHistory(tasks);
     } catch (error) {
         console.error('Error fetching tasks:', error);
+        taskTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Failed to load tasks.</td></tr>';
     }
 }
 
-// Function to populate task list in table view only
+// Populate task list with active tasks
 function populateTaskList(tasks) {
     const taskTableBody = document.getElementById('taskTableBody');
-    taskTableBody.innerHTML = ''; // Clear existing table rows
+    taskTableBody.innerHTML = ''; // Clear existing rows
 
     tasks.forEach(task => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
+        if (task.status !== 'completed') { // Only show active tasks
+            const row = document.createElement('tr');
+            row.innerHTML = `
                 <td>${task.taskName}</td>
                 <td>${task.assignedToName}</td>
                 <td>${task.assignedByName}</td>
@@ -726,51 +711,43 @@ function populateTaskList(tasks) {
                 </td>
                 <td><input type="checkbox" disabled ${task.urgent ? 'checked' : ''}></td>
                 <td>
-                    <button class="btn btn-info" onclick="viewTaskDetails('${task.taskId}')">View</button>
-                    <button class="btn btn-warning" onclick="openEditModal('${task.taskId}')">Edit</button>
+                    <button class="btn btn-info btn-sm" onclick="viewTaskDetails('${task.taskId}')">
+                        <i class="fas fa-eye"></i>
+                    </button>
                 </td>
             `;
-        taskTableBody.appendChild(row);
+            taskTableBody.appendChild(row);
+        }
     });
 }
-
-// Function to populate task history
+// Populate task history with completed tasks
 function populateTaskHistory(tasks) {
     const taskHistoryBody = document.getElementById('taskHistoryBody');
-    taskHistoryBody.innerHTML = ''; // Clear existing history
+    taskHistoryBody.innerHTML = ''; // Clear existing rows
 
     tasks.forEach(task => {
-        if (task.status === 'completed') {
+        if (task.status === 'completed') { // Only show completed tasks
             const row = document.createElement('tr');
             row.innerHTML = `
-                    <td>${task.taskName}</td>
-                    <td>${task.assignedToName}</td>
-                    <td>${task.assignedByName}</td>
-                    <td>${task.description}</td>
-                    <td>${task.dueDate}</td>
-                    <td>${task.status}</td>
-                    <td><input type="checkbox" disabled ${task.urgent ? 'checked' : ''}></td>
-                    <td>${new Date().toLocaleDateString()}</td>
-                `;
+                <td>${task.taskName}</td>
+                <td>${task.assignedToName}</td>
+                <td>${task.assignedByName}</td>
+                <td>${task.description}</td>
+                <td>${task.dueDate}</td>
+                <td><span class="badge bg-success">Completed</span></td>
+                <td><input type="checkbox" disabled ${task.urgent ? 'checked' : ''}></td>
+                <td>${new Date().toLocaleDateString()}</td>
+                <td>
+                    <button class="btn btn-info btn-sm" onclick="viewTaskDetails('${task.taskId}')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            `;
             taskHistoryBody.appendChild(row);
         }
     });
 }
 
-// Function to open the edit task modal
-function openEditModal(taskId) {
-    currentTaskId = taskId; // Set the current task ID
-    getTaskById(taskId).then(task => {
-        // Populate the modal fields with task details
-        document.getElementById('taskName').value = task.taskName;
-        document.getElementById('taskDescription').value = task.description;
-        document.getElementById('dueDate').value = task.dueDate;
-        document.getElementById('urgent').checked = task.urgent;
-        document.getElementById('status').value = task.status;
-
-        $('#editTaskModal').modal('show'); // Show the modal
-    });
-}
 
 // Function to fetch a task by ID
 async function getTaskById(taskId) {
@@ -790,41 +767,6 @@ async function getTaskById(taskId) {
     }
 }
 
-// Function to submit the edited task
-async function submitEditTask() {
-    const taskData = {
-        taskName: document.getElementById('taskName').value,
-        description: document.getElementById('taskDescription').value,
-        dueDate: document.getElementById('dueDate').value,
-        urgent: document.getElementById('urgent').checked,
-        status: document.getElementById('status').value
-    };
-
-    try {
-        const response = await fetch(`${BASE_URL}/api/tasks/${currentTaskId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                ...getAuthHeaders()
-            },
-            body: JSON.stringify(taskData)
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to update task: ${response.status}`);
-        }
-
-        // If the status is completed, move the task to history
-        if (taskData.status === 'completed') {
-            await moveTaskToHistory(currentTaskId);
-        }
-
-        $('#editTaskModal').modal('hide'); // Hide the modal
-        fetchTasks(); // Refresh the task list
-    } catch (error) {
-        console.error('Error updating task:', error);
-    }
-}
 
 // Function to move a task to history
 async function moveTaskToHistory(taskId) {
