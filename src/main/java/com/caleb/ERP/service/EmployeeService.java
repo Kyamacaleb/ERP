@@ -10,7 +10,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
 
-
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -93,13 +92,9 @@ public class EmployeeService implements UserDetailsService {
         // Create contact for the new employee
         contactService.createContactForEmployee(savedEmployee);
 
-        // Send notification about the new employee creation
-        String message = "New Employee Created: " + savedEmployee.getFullName() + " has been added.";
-        notificationService.sendNotification(message, savedEmployee); // Notify employee
-
-        // Notify admin (assuming you have a method to get the admin's email or ID)
-        String adminMessage = "New Employee Created: " + savedEmployee.getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to admins
+        String adminMessage = "A new employee has been created: " + savedEmployee.getFullName();
+        notificationService.sendAdminNotification(adminMessage);
 
         return savedEmployee;
     }
@@ -133,13 +128,9 @@ public class EmployeeService implements UserDetailsService {
         // Save the updated employee
         Employee updatedEmployee = employeeRepository.save(employee);
 
-        // Send notification about the employee update
-        String message = "Employee Updated: " + updatedEmployee.getFullName() + " has been updated.";
-        notificationService.sendNotification(message, updatedEmployee); // Notify employee
-
-        // Notify admin
-        String adminMessage = "Employee Updated: " + updatedEmployee.getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to admins
+        String adminMessage = "Employee details updated: " + updatedEmployee.getFullName();
+        notificationService.sendAdminNotification(adminMessage);
 
         return updatedEmployee;
     }
@@ -150,13 +141,9 @@ public class EmployeeService implements UserDetailsService {
         employeeRepository.save(employee);
         contactService.deactivateContactForEmployee(employee); // Deactivate the associated contact
 
-        // Send notification about the employee deactivation
-        String message = "Employee Deactivated: " + employee.getFullName() + " has been deactivated.";
-        notificationService.sendNotification(message, employee); // Notify employee
-
-        // Notify admin
-        String adminMessage = "Employee Deactivated: " + employee.getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to admins
+        String adminMessage = "Employee has been deactivated: " + employee.getFullName();
+        notificationService.sendAdminNotification(adminMessage);
     }
 
     public boolean existsByEmail(String email) {
@@ -196,11 +183,5 @@ public class EmployeeService implements UserDetailsService {
 
     public Employee saveEmployee(Employee employee) {
         return employeeRepository.save(employee);
-    }
-
-    // Example method to get the admin employee (you need to implement this based on your application logic)
-    private Employee getAdminEmployee() {
-        return employeeRepository.findByRole("ADMIN")
-                .orElseThrow(() -> new NoSuchElementException("Admin employee not found"));
     }
 }

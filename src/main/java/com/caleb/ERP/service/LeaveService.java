@@ -2,13 +2,11 @@ package com.caleb.ERP.service;
 
 import com.caleb.ERP.entity.Employee;
 import com.caleb.ERP.entity.Leave;
-import com.caleb.ERP.repository.EmployeeRepository;
 import com.caleb.ERP.repository.LeaveRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -22,8 +20,6 @@ public class LeaveService {
 
     @Autowired
     private EmployeeService employeeService;
-    @Autowired
-    private EmployeeRepository employeeRepository;
 
     @Autowired
     private NotificationService notificationService; // Inject NotificationService
@@ -78,13 +74,9 @@ public class LeaveService {
         // 7. Save the leave request
         Leave savedLeave = leaveRepository.save(leaveRequest);
 
-        // Send notification about the new leave request
-        String message = "New Leave Request: " + employee.getFullName() + " has submitted a leave request.";
-        notificationService.sendNotification(message, employee); // Notify employee
-
-        // Notify admin
-        String adminMessage = "New Leave Request Submitted by: " + employee.getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to employee
+        String employeeMessage = "Your leave request has been submitted and is pending approval.";
+        notificationService.sendEmployeeNotification(employeeMessage);
 
         return savedLeave;
     }
@@ -147,13 +139,9 @@ public class LeaveService {
         // Update employee balances in the database
         employeeService.updateEmployee(employee.getEmployeeId(), employee);
 
-        // Send notification about the leave approval
-        String message = "Leave Approved: " + employee.getFullName() + " has had their leave approved by " + approverName;
-        notificationService.sendNotification(message, employee); // Notify employee
-
-        // Notify admin
-        String adminMessage = "Leave Approved for Employee: " + employee.getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to employee
+        String employeeMessage = "Your leave request has been approved.";
+        notificationService.sendEmployeeNotification(employeeMessage);
     }
 
     public void rejectLeave(UUID id) {
@@ -170,13 +158,9 @@ public class LeaveService {
         leave.setStatus("Rejected");
         leaveRepository.save(leave);
 
-        // Send notification about the leave rejection
-        String message = "Leave Rejected: " + leave.getEmployee().getFullName() + "'s leave request has been rejected.";
-        notificationService.sendNotification(message, leave.getEmployee()); // Notify employee
-
-        // Notify admin
-        String adminMessage = "Leave Rejected for Employee: " + leave.getEmployee().getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to employee
+        String employeeMessage = "Your leave request has been rejected.";
+        notificationService.sendEmployeeNotification(employeeMessage);
     }
 
     public List<Leave> getLeavesByCurrentEmployee() {
@@ -240,13 +224,9 @@ public class LeaveService {
         // Save the updated leave request
         Leave updatedLeave = leaveRepository.save(existingLeave);
 
-        // Send notification about the leave update
-        String message = "Leave Updated: " + updatedLeave.getEmployee().getFullName() + "'s leave request has been updated.";
-        notificationService.sendNotification(message, updatedLeave.getEmployee()); // Notify employee
-
-        // Notify admin
-        String adminMessage = "Leave Updated for Employee: " + updatedLeave.getEmployee().getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to employee
+        String employeeMessage = "Your leave request has been updated.";
+        notificationService.sendEmployeeNotification(employeeMessage);
 
         return updatedLeave;
     }
@@ -273,18 +253,13 @@ public class LeaveService {
         leave.setStatus("Recalled");
         leaveRepository.save(leave);
 
-        // Send notification about the leave recall
-        String message = "Leave Recalled: " + leave.getEmployee().getFullName() + "'s leave request has been recalled.";
-        notificationService.sendNotification(message, leave.getEmployee()); // Notify employee
-
-        // Notify admin
-        String adminMessage = "Leave Recalled for Employee: " + leave.getEmployee().getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to employee
+        String employeeMessage = "Your leave request has been recalled.";
+        notificationService.sendEmployeeNotification(employeeMessage);
     }
 
-    // Example method to get the admin employee (you need to implement this based on your application logic)
-    private Employee getAdminEmployee() {
-        return employeeRepository.findByRole("ADMIN")
-                .orElseThrow(() -> new NoSuchElementException("Admin employee not found"));
+    public List<Leave> getPendingLeavesByCurrentEmployee(String employeeEmail) {
+        // Assuming you have a method in your repository to find leaves by employee email and status
+        return leaveRepository.findByEmployeeEmailAndStatus(employeeEmail, "Pending");
     }
 }

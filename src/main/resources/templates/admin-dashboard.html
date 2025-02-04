@@ -6,6 +6,9 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="/css/admin.css"> <!-- Link to the external CSS file -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+
 </head>
 <body>
 
@@ -31,6 +34,9 @@
         <li class="nav-item">
             <a class="nav-link" href="#" onclick="showSection('contactManagement')">Contact Management</a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showSection('notificationManagement')">Notifications</a>
+        </li>
         <li class="nav-item mt-auto">
             <button class="btn btn-outline-secondary w-100" id="toggleDarkMode">
                 <i class="fas fa-moon"></i> Toggle Dark Mode
@@ -50,18 +56,10 @@
     <div class="collapse navbar-collapse" id="navbarNav">
         <span class="navbar-text mr-auto"></span>
         <span id="activeSection" class="navbar-text"></span>
-        <div class="dropdown">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="notificationDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="fas fa-bell"></i>
-                <span id="notificationCount" class="badge badge-light">0</span>
-            </button>
-            <div class="dropdown-menu" aria-labelledby="notificationDropdown" id="notificationList">
-                <h6 class="dropdown-header">Notifications</h6>
-                <div id="notificationItems"></div>
-                <div class="dropdown-divider"></div>
-                <button class="dropdown-item" id="markAllAsRead">Mark all as read</button>
-            </div>
-        </div>
+        <a href="#notificationArea" class="btn btn-secondary" id="notificationLink">
+            <i class="fas fa-bell"></i>
+            <span id="notificationCount" class="badge badge-light">0</span>
+        </a>
     </div>
 </nav>
 
@@ -493,6 +491,19 @@
             </div>
         </div>
     </div>
+
+    <div class="card hidden" id="notificationManagement">
+        <div class="card-header">
+            <h5>Notifications</h5>
+        </div>
+        <div class="card-body">
+            <div id="notificationDisplayArea" class="mt-3">
+                <!-- Notifications will be displayed here -->
+            </div>
+            <button class="btn btn-primary" id="markAllAsRead">Mark All as Read</button>
+        </div>
+    </div>
+
     <!-- Contact Management -->
     <div class="card hidden" id="contactManagement">
         <div class="card-header">
@@ -552,6 +563,7 @@
 
     // Show the overview section by default
     showSection('overview');
+
 </script>
 
 </body>

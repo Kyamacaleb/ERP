@@ -17,4 +17,5 @@ public interface LeaveRepository extends JpaRepository<Leave, UUID> {
     long countByStatus(String status);
     List<Leave> findByStatusNot(String status);
 
+    List<Leave> findByEmployeeEmailAndStatus(String employeeEmail, String pending);
 }

@@ -1,7 +1,6 @@
 package com.caleb.ERP.service;
 
 import com.caleb.ERP.entity.Employee;
-import com.caleb.ERP.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -9,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 public class LeaveBalanceResetService {
@@ -17,8 +15,6 @@ public class LeaveBalanceResetService {
 
     @Autowired
     private EmployeeService employeeService;
-    @Autowired
-    private EmployeeRepository employeeRepository;
 
     @Autowired
     private NotificationService notificationService; // Inject NotificationService
@@ -34,25 +30,15 @@ public class LeaveBalanceResetService {
             employee.setCompassionateLeaveBalance(21); // Reset compassionate leave balance
             employeeService.saveEmployee(employee); // Save the updated employee
 
-            // Send notification about the leave balance reset for each employee
-            String message = "Leave balances have been reset for " + employee.getFullName() + ".";
-            notificationService.sendNotification(message, employee); // Notify employee
+            // Send notification to the employee
+            String employeeMessage = "Your leave balances have been reset to 21 days for each type.";
+            notificationService.sendEmployeeNotification(employeeMessage);
 
-            // Notify admin
-            String adminMessage = "Leave balances have been reset for Employee: " + employee.getFullName();
-            notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+            // Optionally, send a notification to admins
+            String adminMessage = "Leave balances have been reset for employee: " + employee.getFullName();
+            notificationService.sendAdminNotification(adminMessage);
         }
 
-        // Optionally, send a summary notification
-        String summaryMessage = "Leave balances have been reset for all employees.";
-        notificationService.sendNotification(summaryMessage, null); // Send to no specific recipient
-
         logger.info("Leave balances have been reset for all employees.");
-    }
-
-    // Example method to get the admin employee (you need to implement this based on your application logic)
-    private Employee getAdminEmployee() {
-        return employeeRepository.findByRole("ADMIN")
-                .orElseThrow(() -> new NoSuchElementException("Admin employee not found"));
     }
 }

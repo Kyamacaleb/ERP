@@ -2,11 +2,9 @@ package com.caleb.ERP.service;
 
 import com.caleb.ERP.entity.Employee;
 import com.caleb.ERP.entity.Finance;
-import com.caleb.ERP.repository.EmployeeRepository;
 import com.caleb.ERP.repository.FinanceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,8 +19,9 @@ public class FinanceService {
 
     @Autowired
     private FinanceRepository financeRepository;
+
     @Autowired
-    private EmployeeRepository employeeRepository;
+    private EmployeeService employeeService;
 
     @Autowired
     private NotificationService notificationService; // Inject NotificationService
@@ -55,13 +54,13 @@ public class FinanceService {
         finance.setStatus("Pending"); // Default status
         Finance savedFinance = financeRepository.save(finance);
 
-        // Send notification about the new finance record
-        String message = "New Finance Record Created: " + savedFinance.getPurpose() + " has been submitted.";
-        notificationService.sendNotification(message, finance.getEmployee()); // Notify employee
+        // Send notification to admins
+        String adminMessage = "A new finance record has been created: " + savedFinance.getPurpose();
+        notificationService.sendAdminNotification(adminMessage);
 
-        // Notify admin
-        String adminMessage = "New Finance Record Created for Employee: " + finance.getEmployee().getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to employee
+        String employeeMessage = "Your finance record has been created: " + savedFinance.getPurpose();
+        notificationService.sendEmployeeNotification(employeeMessage);
 
         return savedFinance;
     }
@@ -82,15 +81,17 @@ public class FinanceService {
         finance.setDateSubmitted(financeDetails.getDateSubmitted());
         finance.setSupportingDocuments(financeDetails.getSupportingDocuments());
 
-        // Send notification about the finance record update
-        String message = "Finance Record Updated: " + finance.getPurpose() + " has been updated.";
-        notificationService.sendNotification(message, finance.getEmployee()); // Notify employee
+        Finance updatedFinance = financeRepository.save(finance);
 
-        // Notify admin
-        String adminMessage = "Finance Record Updated for Employee: " + finance.getEmployee().getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to admins
+        String adminMessage = "Finance record updated: " + updatedFinance.getPurpose();
+        notificationService.sendAdminNotification(adminMessage);
 
-        return financeRepository.save(finance);
+        // Send notification to employee
+        String employeeMessage = "Your finance record has been updated: " + updatedFinance.getPurpose();
+        notificationService.sendEmployeeNotification(employeeMessage);
+
+        return updatedFinance;
     }
 
     // Soft delete a finance record
@@ -102,13 +103,13 @@ public class FinanceService {
         finance.setDeletedAt(LocalDateTime.now()); // Set deletion timestamp
         financeRepository.save(finance); // Save the updated record
 
-        // Send notification about the finance record deletion
-        String message = "Finance Record Deleted: " + finance.getPurpose() + " has been deleted.";
-        notificationService.sendNotification(message, finance.getEmployee()); // Notify employee
+        // Send notification to admins
+        String adminMessage = "Finance record deleted: " + finance.getPurpose();
+        notificationService.sendAdminNotification(adminMessage);
 
-        // Notify admin
-        String adminMessage = "Finance Record Deleted for Employee: " + finance.getEmployee().getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to employee
+        String employeeMessage = "Your finance record has been deleted: " + finance.getPurpose();
+        notificationService.sendEmployeeNotification(employeeMessage);
     }
 
     public void approveFinance(UUID financeId) {
@@ -126,13 +127,13 @@ public class FinanceService {
         finance.setStatus("Approved");
         financeRepository.save(finance);
 
-        // Send notification about the finance approval
-        String message = "Finance Record Approved: " + finance.getPurpose() + " has been approved.";
-        notificationService.sendNotification(message, finance.getEmployee()); // Notify employee
+        // Send notification to admins
+        String adminMessage = "Finance record approved: " + finance.getPurpose();
+        notificationService.sendAdminNotification(adminMessage);
 
-        // Notify admin
-        String adminMessage = "Finance Record Approved for Employee: " + finance.getEmployee().getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to employee
+        String employeeMessage = "Your finance record has been approved: " + finance.getPurpose();
+        notificationService.sendEmployeeNotification(employeeMessage);
     }
 
     public void rejectFinance(UUID financeId) {
@@ -150,13 +151,13 @@ public class FinanceService {
         finance.setStatus("Rejected");
         financeRepository.save(finance);
 
-        // Send notification about the finance rejection
-        String message = "Finance Record Rejected: " + finance.getPurpose() + " has been rejected.";
-        notificationService.sendNotification(message, finance.getEmployee()); // Notify employee
+        // Send notification to admins
+        String adminMessage = "Finance record rejected: " + finance.getPurpose();
+        notificationService.sendAdminNotification(adminMessage);
 
-        // Notify admin
-        String adminMessage = "Finance Record Rejected for Employee: " + finance.getEmployee().getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to employee
+        String employeeMessage = "Your finance record has been rejected: " + finance.getPurpose();
+        notificationService.sendEmployeeNotification(employeeMessage);
     }
 
     // Validate file type for supporting documents
@@ -188,13 +189,13 @@ public class FinanceService {
         finance.setStatus("Recalled");
         financeRepository.save(finance);
 
-        // Send notification about the finance recall
-        String message = "Finance Record Recalled: " + finance.getPurpose() + " has been recalled.";
-        notificationService.sendNotification(message, finance.getEmployee()); // Notify employee
+        // Send notification to admins
+        String adminMessage = "Finance record recalled: " + finance.getPurpose();
+        notificationService.sendAdminNotification(adminMessage);
 
-        // Notify admin
-        String adminMessage = "Finance Record Recalled for Employee: " + finance.getEmployee().getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to employee
+        String employeeMessage = "Your finance record has been recalled: " + finance.getPurpose();
+        notificationService.sendEmployeeNotification(employeeMessage);
     }
 
     // Get deleted finances
@@ -213,18 +214,21 @@ public class FinanceService {
         finance.setDeletedAt(null); // Clear the deletion timestamp
         financeRepository.save(finance); // Save the updated record
 
-        // Send notification about the finance restoration
-        String message = "Finance Record Restored: " + finance.getPurpose() + " has been restored.";
-        notificationService.sendNotification(message, finance.getEmployee()); // Notify employee
+        // Send notification to admins
+        String adminMessage = "Finance record restored: " + finance.getPurpose();
+        notificationService.sendAdminNotification(adminMessage);
 
-        // Notify admin
-        String adminMessage = "Finance Record Restored for Employee: " + finance.getEmployee().getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to employee
+        String employeeMessage = "Your finance record has been restored: " + finance.getPurpose();
+        notificationService.sendEmployeeNotification(employeeMessage);
     }
 
-    // Example method to get the admin employee (you need to implement this based on your application logic)
-    private Employee getAdminEmployee() {
-        return employeeRepository.findByRole("ADMIN")
-                .orElseThrow(() -> new NoSuchElementException("Admin employee not found"));
+    public List<Finance> getPendingFinancesByCurrentEmployee(UUID employeeId) {
+        // Fetch the employee entity using the employeeId
+        Employee employee = employeeService.getEmployeeById(employeeId)
+                .orElseThrow(() -> new NoSuchElementException("Employee not found"));
+
+        // Now use the employee object to find pending finances
+        return financeRepository.findByEmployeeAndStatus(employee, "Pending");
     }
 }

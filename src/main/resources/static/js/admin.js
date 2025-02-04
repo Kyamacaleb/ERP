@@ -30,7 +30,7 @@ function getAuthHeaders() {
     }
 }
 
-const BASE_URL = 'http://localhost:8082/api'; // Adjust the base URL as needed
+const BASE_URL = 'http://192.168.100.39:8082/api'; // Adjust the base URL as needed
 
 async function fetchOverviewData() {
     try {
@@ -1104,9 +1104,84 @@ window.onload = setMinDueDate;
 
 
         //NOTIFICATIONS
+let stompClient = null;
+let notificationCount = 0;
+let notifications = []; // Store notifications in an array
 
-// Call the fetchOverviewData function when the page loads
+function connectWebSocket() {
+    const token = localStorage.getItem('jwt'); // Retrieve the JWT from local storage
+    const socket = new SockJS(`http://192.168.100.39:8082/notifications?token=${token}`); // Include token in the URL
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, function (frame) {
+        console.log('Connected: ' + frame);
+        // Subscribe to the admin notifications topic
+        stompClient.subscribe('/topic/admins', function (notification) {
+            handleNotification(JSON.parse(notification.body));
+        });
+    }, function (error) {
+        console.error('WebSocket connection error:', error);
+    });
+}
+
+// Function to handle incoming notifications
+function handleNotification(notification) {
+    console.log('New notification:', notification); // Debugging log
+
+    // Check if notification has the expected structure
+    if (!notification.message) {
+        console.error('Notification does not have a message property:', notification);
+        return;
+    }
+    // Add the notification to the notifications array with a read status
+    notifications.push({ ...notification, read: false });
+
+    // Display the notification
+    displayNotifications();
+}
+
+// Function to display notifications
+function displayNotifications() {
+    const notificationDisplayArea = document.getElementById('notificationDisplayArea');
+    notificationDisplayArea.innerHTML = ''; // Clear existing notifications
+
+    notifications.forEach((notification, index) => {
+        const notificationItem = document.createElement('div');
+        notificationItem.className = `alert alert-info ${notification.read ? 'read' : ''}`; // Add a class if read
+        notificationItem.innerText = notification.message; // Adjust based on your notification structure
+
+        // Add a button to mark this notification as read
+        const markAsReadButton = document.createElement('button');
+        markAsReadButton.className = 'btn btn-success btn-sm float-right';
+        markAsReadButton.innerText = 'Mark as Read';
+        markAsReadButton.onclick = function() {
+            markNotificationAsRead(index); // Mark this notification as read
+        };
+
+        notificationItem.appendChild(markAsReadButton); // Append the button
+        notificationDisplayArea.appendChild(notificationItem); // Append the notification item
+    });
+
+    // Update the notification count
+    notificationCount = notifications.filter(n => !n.read).length; // Count unread notifications
+    document.getElementById('notificationCount').innerText = notificationCount;
+}
+
+// Function to mark a specific notification as read
+function markNotificationAsRead(index) {
+    notifications[index].read = true; // Set the read status to true
+    displayNotifications(); // Refresh the display
+}
+
+// Mark all notifications as read
+document.getElementById('markAllAsRead').addEventListener('click', function () {
+    notifications.forEach(notification => notification.read = true); // Mark all as read
+    displayNotifications(); // Refresh the display
+});
+
+// Ensure elements exist before adding event listeners
 document.addEventListener('DOMContentLoaded', () => {
+    // Call other functions
     fetchOverviewData();
     populateEmployeeDropdown(); // Populate the employee dropdown
     fetchAdminFinanceRecords(); // Fetch and display all finance records
@@ -1116,4 +1191,5 @@ document.addEventListener('DOMContentLoaded', () => {
     getAllEmployees(); // Fetch and display all employees
     getAllContacts(); // Fetch and display all contacts
     getAllTasks(); // Fetch and display all tasks
+    connectWebSocket(); // Connect to WebSocket for notifications
 });

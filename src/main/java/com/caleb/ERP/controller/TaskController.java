@@ -98,4 +98,18 @@ public class TaskController {
         return new ResponseEntity<>(tasks, HttpStatus.OK);
     }
 
+    // Get current employee's pending tasks
+    @GetMapping("/me/non-started")
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public ResponseEntity<List<Task>> getPendingTasks() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        UUID employeeId = employeeService.getEmployeeByEmail(email)
+                .map(Employee::getEmployeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+
+        List<Task> pendingTasks = taskService.getPendingTasksByCurrentEmployee(employeeId);
+        return new ResponseEntity<>(pendingTasks, HttpStatus.OK);
+    }
+
 }

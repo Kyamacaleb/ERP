@@ -44,6 +44,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/tasks/**").hasAnyRole("ADMIN", "EMPLOYEE")
                 .requestMatchers("/api/finances/**").hasAnyRole("ADMIN", "EMPLOYEE")
                 .requestMatchers("/api/notifications/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                .requestMatchers("/notifications/**").permitAll() // Allow access to WebSocket notifications
                 .requestMatchers("/employee-dashboard", "/admin-dashboard").permitAll() // Public pages
                 .requestMatchers("/admin-dashboard").hasRole("ADMIN")
                 // Specific access to profile pictures by employee or admin

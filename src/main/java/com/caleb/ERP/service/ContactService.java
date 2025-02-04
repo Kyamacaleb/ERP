@@ -3,10 +3,8 @@ package com.caleb.ERP.service;
 import com.caleb.ERP.entity.Contact;
 import com.caleb.ERP.entity.Employee;
 import com.caleb.ERP.repository.ContactRepository;
-import com.caleb.ERP.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -17,8 +15,7 @@ public class ContactService {
 
     @Autowired
     private ContactRepository contactRepository;
-    @Autowired
-    private EmployeeRepository employeeRepository;
+
     @Autowired
     private NotificationService notificationService; // Inject NotificationService
 
@@ -30,16 +27,12 @@ public class ContactService {
         contact.setDepartment(employee.getDepartment());
         contact.setPhoneNumber(employee.getPhoneNumber());
 
-        // Save the contact and send notification
+        // Save the contact
         Contact savedContact = contactRepository.save(contact);
 
-        // Send notification about the new contact creation
-        String message = "New Contact Created: " + savedContact.getName() + " for employee " + employee.getFullName() + ".";
-        notificationService.sendNotification(message, employee); // Notify employee
-
-        // Notify admin (assuming you have a method to get the admin's email or ID)
-        String adminMessage = "New Contact Created for Employee: " + employee.getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to admins
+        String adminMessage = "A new contact has been created for employee: " + savedContact.getName();
+        notificationService.sendAdminNotification(adminMessage);
 
         return savedContact;
     }
@@ -54,16 +47,12 @@ public class ContactService {
         contact.setEmail(employee.getEmail());
         contact.setDepartment(employee.getDepartment());
 
-        // Save the updated contact and send notification
+        // Save the updated contact
         Contact updatedContact = contactRepository.save(contact);
 
-        // Send notification about the contact update
-        String message = "Contact Updated: " + updatedContact.getName() + " for employee " + employee.getFullName() + ".";
-        notificationService.sendNotification(message, employee); // Notify employee
-
-        // Notify admin
-        String adminMessage = "Contact Updated for Employee: " + employee.getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to admins
+        String adminMessage = "Contact details updated for employee: " + updatedContact.getName();
+        notificationService.sendAdminNotification(adminMessage);
 
         return updatedContact;
     }
@@ -77,13 +66,9 @@ public class ContactService {
         contact.setActive(false);
         contactRepository.save(contact);
 
-        // Send notification about the contact deactivation
-        String message = "Contact Deactivated: " + contact.getName() + " for employee " + employee.getFullName() + " has been deactivated.";
-        notificationService.sendNotification(message, employee); // Notify employee
-
-        // Notify admin
-        String adminMessage = "Contact Deactivated for Employee: " + employee.getFullName();
-        notificationService.sendNotification(adminMessage, getAdminEmployee()); // Notify admin
+        // Send notification to admins
+        String adminMessage = "Contact has been deactivated for employee: " + contact.getName();
+        notificationService.sendAdminNotification(adminMessage);
     }
 
     public Optional<Contact> getContactByEmployee(Employee employee) {
@@ -92,12 +77,6 @@ public class ContactService {
 
     public List<Contact> getAllContacts() {
         return contactRepository.findAll(); // Assuming you have a method in your repository to find all contacts
-    }
-
-    // Example method to get the admin employee (you need to implement this based on your application logic)
-    private Employee getAdminEmployee() {
-        return employeeRepository.findByRole("ADMIN")
-                .orElseThrow(() -> new NoSuchElementException("Admin employee not found"));
     }
 
     public Contact createContact(Contact contact) {

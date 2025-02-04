@@ -4,7 +4,6 @@ import com.caleb.ERP.entity.Employee;
 import com.caleb.ERP.entity.Finance;
 import com.caleb.ERP.service.FinanceService;
 import com.caleb.ERP.service.EmployeeService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,7 +18,6 @@ import org.springframework.core.io.Resource;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -254,5 +252,17 @@ public class FinanceController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(resource);
+    }
+    // Get current employee's pending finance requests
+    @GetMapping("/me/pending")
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public ResponseEntity<List<Finance>> getPendingFinances() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        UUID employeeId = employeeService.getEmployeeByEmail(email)
+                .map(Employee::getEmployeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+
+        List<Finance> pendingFinances = financeService.getPendingFinancesByCurrentEmployee(employeeId);
+        return new ResponseEntity<>(pendingFinances, HttpStatus.OK);
     }
 }

@@ -369,3 +369,10 @@ body {
     font-size: 1.5rem;
     margin-bottom: 1rem;
 }
+#notificationArea { margin-bottom: 20px; /* Add some space below the notification area */ }
+
+#notificationDisplayArea .alert { margin-bottom: 10px; /* Space between notifications */ }
+.read {
+    background-color: #e0e0e0; /* Light gray background for read notifications */
+    text-decoration: line-through; /* Optional: strikethrough for read notifications */
+}

@@ -1,5 +1,72 @@
 // Base URL for API requests
-const BASE_URL = 'http://localhost:8082'; // Adjust this to your actual backend URL
+const BASE_URL = 'http://192.168.100.39:8082'; // Adjust this to your actual backend URL
+
+// Function to fetch and display all overview counts
+async function fetchOverviewCounts() {
+    await fetchPendingLeavesCount();
+    await fetchPendingFinancesCount();
+    await fetchPendingTasksCount();
+}
+// Fetch count of pending leaves
+async function fetchPendingLeavesCount() {
+    try {
+        const response = await fetch(`${BASE_URL}/api/leaves/me/pending`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch pending leaves');
+        }
+
+        const pendingLeaves = await response.json();
+        console.log('Pending Leaves:', pendingLeaves); // Log the response
+        document.getElementById('pendingLeavesCount').textContent = pendingLeaves.length; // Update count
+    } catch (error) {
+        console.error('Error fetching pending leaves count:', error);
+        document.getElementById('pendingLeavesCount').textContent = '0'; // Set to 0 on error
+    }
+}
+
+// Fetch count of pending finances
+async function fetchPendingFinancesCount() {
+    try {
+        const response = await fetch(`${BASE_URL}/api/finances/me/pending`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch pending finances');
+        }
+
+        const pendingFinances = await response.json();
+        document.getElementById('pendingFinancesCount').textContent = pendingFinances.length; // Update count
+    } catch (error) {
+        console.error('Error fetching pending finances count:', error);
+        document.getElementById('pendingFinancesCount').textContent = '0'; // Set to 0 on error
+    }
+}
+
+// Fetch count of pending tasks
+async function fetchPendingTasksCount() {
+    try {
+        const response = await fetch(`${BASE_URL}/api/tasks/me/non-started`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch pending tasks');
+        }
+
+        const pendingTasks = await response.json();
+        document.getElementById('pendingTasksCount').textContent = pendingTasks.length; // Update count
+    } catch (error) {
+        console.error('Error fetching pending tasks count:', error);
+        document.getElementById('pendingTasksCount').textContent = '0'; // Set to 0 on error
+    }
+}
 
 // Function to show the modal
 function showEditLeaveRequestModal() {
@@ -24,8 +91,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('Finance records fetched');
         await fetchTasks();
         console.log('Tasks loaded');
-        await fetchNotifications();
+        await connectWebSocket(); // Connect to WebSocket for notifications
         console.log('Notifications fetched');
+        await fetchOverviewCounts();
 
         showSection('overview'); // Show Overview by default
     } catch (error) {
@@ -42,6 +110,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (localStorage.getItem('darkMode') === 'enabled') {
         document.body.classList.add('dark-mode');
     }
+
+
 
     // Event listener for the edit profile button
     document.getElementById('editProfileButton').addEventListener('click', async function() {
@@ -433,7 +503,7 @@ const displayLeaveBalances = (leaveBalances) => {
     const paternityLeaveRemaining = leaveBalances["Paternity Leave Balance"];
     const paternityLeaveProgress = (paternityLeaveUsed / defaultAllocatedDays) * 100;
 
-    document.getElementById('paternityLeaveAllocated').textContent = defaultAllocatedDays;
+    document.getElementById('paternityLeaveAllocated').textContent = defaultAllocatedDays; // This should be the allocated days
     document.getElementById('paternityLeaveRemaining').textContent = paternityLeaveRemaining;
     const paternityLeaveColor = getProgressBarColor(paternityLeaveUsed, defaultAllocatedDays);
     const paternityLeaveProgressBar = document.getElementById('paternityLeaveProgress');
@@ -446,7 +516,7 @@ const displayLeaveBalances = (leaveBalances) => {
     const compassionateLeaveRemaining = leaveBalances["Compassionate Leave Balance"];
     const compassionateLeaveProgress = (compassionateLeaveUsed / defaultAllocatedDays) * 100;
 
-    document.getElementById('compassionateLeaveAllocated').textContent = defaultAllocatedDays;
+    document.getElementById('compassionateLeaveAllocated').textContent = defaultAllocatedDays; // This should be the allocated days
     document.getElementById('compassionateLeaveRemaining').textContent = compassionateLeaveRemaining;
     const compassionateLeaveColor = getProgressBarColor(compassionateLeaveUsed, defaultAllocatedDays);
     const compassionateLeaveProgressBar = document.getElementById('compassionateLeaveProgress');
@@ -971,3 +1041,89 @@ function downloadFinanceFile(financeId) {
             alert('Error downloading file: ' + error.message);
         });
 }
+
+// NOTIFICATIONS
+let stompClient = null;
+let notificationCount = 0;
+let notifications = []; // Store notifications in an array
+
+function connectWebSocket() {
+    const token = localStorage.getItem('jwt'); // Retrieve the JWT from local storage
+    const socket = new SockJS(`http://192.168.100.39:8082/notifications?token=${token}`); // Include token in the URL
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, function (frame) {
+        console.log('Connected: ' + frame);
+        // Subscribe to the employee notifications topic
+        stompClient.subscribe('/topic/employees', function (notification) {
+            handleNotification(JSON.parse(notification.body));
+        });
+    }, function (error) {
+        console.error('WebSocket connection error:', error);
+    });
+}
+
+// Function to handle incoming notifications
+function handleNotification(notification) {
+    console.log('New notification:', notification); // Debugging log
+
+    // Check if notification has the expected structure
+    if (!notification.message) {
+        console.error('Notification does not have a message property:', notification);
+        return;
+    }
+
+    // Add the notification to the notifications array with a read status
+    notifications.push({ ...notification, read: false });
+
+    // Display the notification
+    displayNotifications();
+    updateNotificationCount(); // Update the notification count
+}
+
+// Function to display notifications
+function displayNotifications() {
+    const notificationDisplayArea = document.getElementById('notificationDisplayArea');
+    notificationDisplayArea.innerHTML = ''; // Clear existing notifications
+
+    notifications.forEach((notification, index) => {
+        const notificationItem = document.createElement('div');
+        notificationItem.className = `alert alert-info ${notification.read ? 'read' : ''}`; // Add a class if read
+        notificationItem.innerText = notification.message; // Adjust based on your notification structure
+
+        // Add a button to mark this notification as read
+        const markAsReadButton = document.createElement('button');
+        markAsReadButton.className = 'btn btn-success btn-sm float-right';
+        markAsReadButton.innerText = 'Mark as Read';
+        markAsReadButton.onclick = function() {
+            markNotificationAsRead(index); // Mark this notification as read
+        };
+
+        notificationItem.appendChild(markAsReadButton); // Append the button
+        notificationDisplayArea.appendChild(notificationItem); // Append the notification item
+    });
+}
+
+// Function to update the notification count
+function updateNotificationCount() {
+    const notificationCountElement = document.getElementById('notificationCount');
+    notificationCountElement.innerText = notifications.filter(n => !n.read).length; // Count unread notifications
+}
+
+// Function to mark a specific notification as read
+function markNotificationAsRead(index) {
+    notifications[index].read = true; // Set the read status to true
+    displayNotifications(); // Refresh the display
+}
+
+// Mark all notifications as read
+document.getElementById('markAllAsRead').addEventListener('click', function () {
+    notifications.forEach(notification => notification.read = true); // Mark all as read
+    displayNotifications(); // Refresh the display
+});
+
+// Link the notification button to the notification section
+document.getElementById('notificationButton').addEventListener('click', function() {
+    showSection('notificationManagement'); // Show the notification section
+});
+

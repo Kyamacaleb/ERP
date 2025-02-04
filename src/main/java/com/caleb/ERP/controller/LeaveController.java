@@ -163,6 +163,14 @@ public class LeaveController {
         leaveService.approveLeave(id, approverName);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
-
+    // Get current employee's pending leave requests
+    @GetMapping("/me/pending")
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public ResponseEntity<List<Leave>> getPendingLeaves() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String employeeEmail = authentication.getName();
+        List<Leave> pendingLeaves = leaveService.getPendingLeavesByCurrentEmployee(employeeEmail);
+        return new ResponseEntity<>(pendingLeaves, HttpStatus.OK);
+    }
 
 }
