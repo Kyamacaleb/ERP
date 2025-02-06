@@ -289,50 +289,88 @@ async function loadContacts() {
     } catch (error) {
         console.error("Error fetching contacts:", error);
     }
-};
+}
+
+// Function to check if the image is upright
+function isImageUpright(file) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            img.src = e.target.result;
+            img.onload = function() {
+                // Check the orientation of the image (portrait)
+                if (img.width > img.height) {
+                    reject('Image must be upright (portrait orientation).');
+                } else {
+                    resolve(); // Image is upright
+                }
+            };
+        };
+
+        reader.readAsDataURL(file); // Read the file as a data URL
+    });
+}
 
 // Handle profile picture upload
 document.getElementById('profilePictureUpload').addEventListener('change', function(event) {
     const file = event.target.files[0]; // Get the selected file
     if (file) {
-        const formData = new FormData();
-        formData.append('file', file); // Ensure the key matches what the server expects
-
-        // Use the employee ID from the decoded JWT
-        const employeeId = jwt_decode(localStorage.getItem('jwt')).employeeId;
-
-        // Display the uploaded image immediately
-        const profilePictureElement = document.getElementById('profilePicture');
         const reader = new FileReader();
 
-        // Set the src of the profile picture to the uploaded image
+        // Display the uploaded image immediately
         reader.onload = function(e) {
+            const profilePictureElement = document.getElementById('profilePicture');
             profilePictureElement.src = e.target.result; // Set the src to the uploaded image
+            profilePictureElement.style.display = 'block'; // Show the image preview
         };
 
         reader.readAsDataURL(file); // Read the file as a data URL
 
-        // Upload the profile picture to the server
-        fetch(`${BASE_URL}/api/employees/${employeeId}/upload-profile-picture`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('jwt')}`, // Include your JWT token here
-            },
-            body: formData, // Do not set Content-Type here; let the browser do it
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to upload profile picture');
-                }
-                return response.text(); // Get the response message
+        // Check if the image is upright before uploading
+        isImageUpright(file)
+            .then(() => {
+                // If the image is upright, proceed with the upload
+                const formData = new FormData();
+                formData.append('file', file); // Ensure the key matches what the server expects
+
+                // Use the employee ID from the decoded JWT
+                const employeeId = jwt_decode(localStorage.getItem('jwt')).employeeId;
+
+                // Automatically upload the profile picture to the server
+                fetch(`${BASE_URL}/api/employees/${employeeId}/upload-profile-picture`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('jwt')}`, // Include your JWT token here
+                    },
+                    body: formData, // Do not set Content-Type here; let the browser do it
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.text().then(text => { throw new Error(text); });
+                        }
+                        return response.text(); // Get the response message
+                    })
+                    .then(message => {
+                        alert(message); // Notify the user of the upload success
+                        loadPersonalInfo(); // Refresh the personal information displayed
+                        $('#uploadProfilePictureModal').modal('hide'); // Close the modal
+                    })
+                    .catch(error => {
+                        console.error('Error uploading profile picture:', error);
+                        alert('Error uploading profile picture: ' + error.message);
+                    });
             })
-            .then(message => {
-                alert(message); // Notify the user of the upload success
-                loadPersonalInfo(); // Refresh the personal information displayed
-            })
-            .catch(error => console.error('Error uploading profile picture:', error));
+            .catch(errorMessage => {
+                // If the image is not upright, show the error message
+                alert(errorMessage);
+                event.target.value = ""; // Clear the input
+                document.getElementById('profilePicture').style.display = 'none'; // Hide the image preview
+            });
     }
 });
+
 
 // Function to fetch employee data
 async function fetchEmployeeData() {
@@ -371,6 +409,15 @@ document.getElementById('editProfileButton').addEventListener('click', async fun
 document.getElementById('editProfileForm').addEventListener('submit', function(event) {
     event.preventDefault(); // Prevent the default form submission
 
+    // Clear previous error messages
+    document.getElementById('editFirstNameError').textContent = '';
+    document.getElementById('editLastNameError').textContent = '';
+    document.getElementById('editPhoneError').textContent = '';
+    document.getElementById('editDepartmentError').textContent = '';
+    document.getElementById('editEmergencyContactNameError').textContent = '';
+    document.getElementById('editEmergencyContactPhoneError').textContent = '';
+    document.getElementById('editDateOfJoiningError').textContent = '';
+
     // Create an object to hold the updated employee data
     const updatedEmployee = {
         firstName: document.getElementById('editFirstName').value,
@@ -379,7 +426,59 @@ document.getElementById('editProfileForm').addEventListener('submit', function(e
         department: document.getElementById('editDepartment').value,
         emergencyContactName: document.getElementById('editEmergencyContactName').value,
         emergencyContactPhone: document.getElementById('editEmergencyContactPhone').value,
+        dateOfJoining: document.getElementById('editDateOfJoining').value
     };
+
+    // Validation
+    let isValid = true;
+
+    // Validate date of joining
+    const today = new Date();
+    const selectedDate = new Date(updatedEmployee.dateOfJoining);
+    if (selectedDate > today) {
+        document.getElementById('editDateOfJoiningError').textContent = 'Date of joining must not be in the future.';
+        isValid = false;
+    }
+
+    // Validate first name
+    if (!/^[A-Za-z\s]+$/.test(updatedEmployee.firstName)) {
+        document.getElementById('editFirstNameError').textContent = 'First name must contain only letters.';
+        isValid = false;
+    }
+
+    // Validate last name
+    if (!/^[A-Za-z\s]+$/.test(updatedEmployee.lastName)) {
+        document.getElementById('editLastNameError').textContent = 'Last name must contain only letters.';
+        isValid = false;
+    }
+
+    // Validate phone number
+    if (!/^(\\+254(10[0-9]|11[0-9]|7[0-9]{8})|07[0-9]{8}|011[0-9]{8})$/.test(updatedEmployee.phoneNumber)) {
+        document.getElementById('editPhoneError').textContent = 'Phone number format should start with +254 10, +254 11, +254 7, 07, 010 or 011 followed by 8 digits.';
+        isValid = false;
+    }
+
+    // Validate emergency contact name
+    if (!/^[A-Za-z\s]+$/.test(updatedEmployee.emergencyContactName)) {
+        document.getElementById('editEmergencyContactNameError').textContent = 'Emergency contact name must contain only letters.';
+        isValid = false;
+    }
+
+    // Validate emergency contact phone
+    if (!/^(\\+254(10[0-9]|11[0-9]|7[0-9]{8})|07[0-9]{8}|011[0-9]{8})$/.test(updatedEmployee.emergencyContactPhone)) {
+        document.getElementById('editEmergencyContactPhoneError').textContent = 'Emergency contact phone number format should start with +254 10, +254 11, +254 7, 07, 010 or 011 followed by 8 digits.';
+        isValid = false;
+    }
+
+    // Validate date of joining
+    if (!updatedEmployee.dateOfJoining) {
+        document.getElementById('editDateOfJoiningError').textContent = 'Date of joining must not be in the future.';
+        isValid = false;
+    }
+
+    if (!isValid) {
+        return; // Stop submission if validation fails
+    }
 
     // Send a PUT request to update the employee data
     fetch(`${BASE_URL}/api/employees/me`, {
@@ -436,6 +535,11 @@ document.getElementById('changePasswordForm').addEventListener('submit', functio
             alert('Error changing password: ' + error.message);
         });
 });
+function togglePasswordVisibility(passwordFieldId, checkboxId) {
+    const passwordField = document.getElementById(passwordFieldId);
+    const checkbox = document.getElementById(checkboxId);
+    passwordField.type = checkbox.checked ? "text" : "password";
+}
 
 // Leave Management Functions
 // Function to load leave balances
@@ -604,6 +708,9 @@ const validateLeaveRequest = (leaveRequest) => {
     if (!leaveRequest.reason) {
         document.getElementById('reasonError').textContent = "Please provide a reason for the leave.";
         isValid = false;
+    } else if (!/^[a-zA-Z0-9.,!\s]+$/.test(leaveRequest.reason)) { // Check for alphabetic characters, numbers, spaces, and punctuation
+        document.getElementById('reasonError').textContent = "Invalid input. Only alphabetic characters are allowed.";
+        isValid = false;
     }
     return isValid; // Return true if valid, false otherwise
 };
@@ -644,7 +751,13 @@ document.getElementById('leaveRequestForm').addEventListener('submit', async (e)
 
         if (!response.ok) throw new Error('Failed to submit leave request');
         alert("Leave request submitted successfully!");
+
+        // Close the modal
+        const leaveRequestModal = bootstrap.Modal.getInstance(document.getElementById('leaveRequestModal'));
+        leaveRequestModal.hide(); // Hide the modal
+
         loadLeaveHistory(); // Refresh the leave history
+        loadLeaveBalances(); // Refresh leave balances
     } catch (error) {
         console.error("Error submitting leave request:", error);
     }
@@ -717,8 +830,8 @@ document.getElementById('editLeaveRequestForm').addEventListener('submit', async
         alert("Leave request updated successfully!");
 
         // Close the modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('editLeaveRequestModal'));
-        modal.hide(); // Hide the modal
+        const editLeaveRequestModal = bootstrap.Modal.getInstance(document.getElementById('editLeaveRequestModal'));
+        editLeaveRequestModal.hide(); // Hide the modal
 
         // Refresh the leave history and balances
         await loadLeaveHistory(); // Refresh the leave history
@@ -779,7 +892,9 @@ function populateTaskList(tasks) {
                         <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Completed</option>
                     </select>
                 </td>
-                <td><input type="checkbox" disabled ${task.urgent ? 'checked' : ''}></td>
+                <td>
+                    <input type="checkbox" disabled ${task.urgent ? 'checked' : ''} class="${task.urgent ? 'urgent-checkbox' : ''}">
+                </td>
                 <td>
                     <button class="btn btn-info btn-sm" onclick="viewTaskDetails('${task.taskId}')">
                         <i class="fas fa-eye"></i>
@@ -896,6 +1011,8 @@ function viewTaskDetails(taskId) {
         $('#taskViewModal').modal('show'); // Show the modal
     });
 }
+
+
 
 // Finance Management
 // Set up date validation for requisition and claim forms

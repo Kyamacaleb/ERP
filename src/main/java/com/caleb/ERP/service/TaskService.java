@@ -8,6 +8,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -47,7 +49,9 @@ public class TaskService {
     }
 
     public Optional<Task> getTaskById(UUID taskId) {
-        return taskRepository.findById(taskId);
+        Optional<Task> taskOpt = taskRepository.findById(taskId);
+        taskOpt.ifPresent(this::setTaskNames); // Set names if task is found
+        return taskOpt;
     }
 
     public Task updateTask(UUID taskId, Task taskDetails) {
@@ -57,7 +61,6 @@ public class TaskService {
         task.setTaskName(taskDetails.getTaskName());
         task.setDescription(taskDetails.getDescription());
         task.setDueDate(taskDetails.getDueDate());
-        task.setStatus(taskDetails.getStatus());
         task.setUrgent(taskDetails.isUrgent());
 
         Task updatedTask = taskRepository.save(task);
@@ -121,6 +124,69 @@ public class TaskService {
     }
 
     public List<Task> getPendingTasksByCurrentEmployee(UUID employeeId) {
-        return taskRepository.findByAssignedToEmployeeIdAndStatus(employeeId, "not_started");
+        return taskRepository.findByAssignedToEmployeeIdAndStatus(employeeId, "Not Started");
     }
+
+
+    // Method to validate task name
+    public boolean isValidTaskName(String taskName) {
+        return taskName != null && taskName.matches("[a-zA-Z0-9\\s\\p{Punct}]+");
+    }
+    public Task requestExtension(UUID taskId, String reason, String newDueDate) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new NoSuchElementException("Task not found"));
+
+        if (!task.getStatus().equals("in-progress")) {
+            throw new RuntimeException("Extension can only be requested for tasks in progress.");
+        }
+
+        LocalDate currentDueDate = LocalDate.parse(task.getDueDate());
+        LocalDate proposedNewDueDate = LocalDate.parse(newDueDate);
+
+        // Validate that the new due date is in the future and after the current due date
+        if (!proposedNewDueDate.isAfter(currentDueDate)) {
+            throw new RuntimeException("The new due date must be in the future and later than the current due date.");
+        }
+
+        task.setExtensionRequested(true);
+        task.setExtensionReason(reason);
+        task.setNewDueDate(newDueDate);
+        task.setRequestTimestamp(LocalDateTime.now());
+
+        return taskRepository.save(task);
+    }
+
+    public Task approveExtension(UUID taskId, Employee admin) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new NoSuchElementException("Task not found"));
+
+        if (!task.isExtensionRequested()) {
+            throw new RuntimeException("No extension request found for this task.");
+        }
+
+        task.setApprovalStatus("Approved");
+        task.setApprovalTimestamp(LocalDateTime.now());
+        task.setDueDate(task.getNewDueDate()); // Update the due date to the new one
+        task.setExtensionRequested(false); // Reset the extension request flag
+        task.setApprovedBy(admin); // Set the admin who approved the request
+
+        return taskRepository.save(task);
+    }
+
+    public Task rejectExtension(UUID taskId, Employee admin) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new NoSuchElementException("Task not found"));
+
+        if (!task.isExtensionRequested()) {
+            throw new RuntimeException("No extension request found for this task.");
+        }
+
+        task.setApprovalStatus("Rejected");
+        task.setApprovalTimestamp(LocalDateTime.now());
+        task.setExtensionRequested(false); // Reset the extension request flag
+        task.setApprovedBy(admin); // Set the admin who rejected the request
+
+        return taskRepository.save(task);
+    }
+
 }

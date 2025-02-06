@@ -71,6 +71,75 @@ async function fetchOverviewData() {
     }
 }
 
+function validateEmployeeData(employeeData) {
+    const errors = [];
+
+    // Clear previous error messages
+    document.getElementById('employeeNameError').innerText = '';
+    document.getElementById('employeeLastNameError').innerText = '';
+    document.getElementById('employeeEmailError').innerText = '';
+    document.getElementById('employeePasswordError').innerText = '';
+    document.getElementById('employeePhoneNumberError').innerText = '';
+    document.getElementById('employeeJoiningDateError').innerText = '';
+    document.getElementById('emergencyContactNameError').innerText = '';
+    document.getElementById('emergencyContactNumberError').innerText = '';
+    document.getElementById('updateEmployeeNameError').innerText = '';
+    document.getElementById('updateEmployeeLastNameError').innerText = '';
+    document.getElementById('updateEmployeePhoneNumberError').innerText = '';
+    document.getElementById('updateEmergencyContactNameError').innerText = '';
+    document.getElementById('updateEmergencyContactNumberError').innerText = '';
+
+    // Validate first name
+    if (!/^[A-Za-z\s'-]+$/.test(employeeData.firstName)) {
+        document.getElementById('employeeNameError').innerText = 'First name must contain only alphabetic characters, spaces, hyphens, or apostrophes.';
+        document.getElementById('updateEmployeeNameError').innerText = 'First name must contain only alphabetic characters, spaces, hyphens, or apostrophes.';
+    }
+
+    // Validate last name
+    if (!/^[A-Za-z\s'-]+$/.test(employeeData.lastName)) {
+        document.getElementById('employeeLastNameError').innerText = 'Last name must contain only alphabetic characters, spaces, hyphens, or apostrophes.';
+        document.getElementById('updateEmployeeLastNameError').innerText = 'Last name must contain only alphabetic characters, spaces, hyphens, or apostrophes.';
+    }
+
+    // Validate emergency contact name
+    if (!/^[A-Za-z\s'-]+$/.test(employeeData.emergencyContactName)) {
+        document.getElementById('emergencyContactNameError').innerText = 'Emergency contact name must contain only alphabetic characters, spaces, hyphens, or apostrophes.';
+        document.getElementById('updateEmergencyContactNameError').innerText = 'Emergency contact name must contain only alphabetic characters, spaces, hyphens, or apostrophes.';
+    }
+
+    // Validate email format (only for create employee)
+    if (employeeData.email && !/^[A-Za-z0-9+_.-]+@(.+)$/.test(employeeData.email)) {
+        document.getElementById('employeeEmailError').innerText = 'Invalid email format.';
+    }
+
+
+    // Validate phone number format
+    const phoneRegex = /^(\+254(10[0-9]|11[0-9]|7[0-9]{8})|07[0-9]{8}|010[0-9]{8}|011[0-9]{8})$/;
+    if (!phoneRegex.test(employeeData.phoneNumber)) {
+        document.getElementById('employeePhoneNumberError').innerText = 'Phone number format should start with +254 10, +254 11, +254 7, 07, 010 or 011 followed by 8 digits.';
+        document.getElementById('updateEmployeePhoneNumberError').innerText = 'Phone number format should start with +254 10, +254 11, +254 7, 07, 010 or 011 followed by 8 digits.';
+    }
+
+    // Validate emergency contact phone number format
+    if (!phoneRegex.test(employeeData.emergencyContactPhone)) {
+        document.getElementById('emergencyContactNumberError').innerText = 'Emergency contact phone number format should start with +254 10, +254 11, +254 7, 07, 010 or 011 followed by 8 digits.';
+        document.getElementById('updateEmergencyContactNumberError').innerText = 'Emergency contact phone number format should start with +254 10, +254 11, +254 7, 07, 010 or 011 followed by 8 digits.';
+    }
+
+    // Validate date of joining
+    if (new Date(employeeData.dateOfJoining) > new Date()) {
+        document.getElementById('employeeJoiningDateError').innerText = 'Date of joining must not be in the future.';
+    }
+
+    // Validate password complexity
+    const passwordPattern = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$/;
+    if (!passwordPattern.test(employeeData.password)) {
+        document.getElementById('employeePasswordError').innerText = 'Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character.';
+    }
+
+    // Check if there are any errors
+    return errors.length > 0;
+}
 function showCreateEmployeeForm() {
     resetForm(); // Reset the form fields when showing the form
     const createEmployeeFormContainer = document.getElementById('createEmployeeFormContainer');
@@ -81,7 +150,6 @@ function showCreateEmployeeForm() {
         createEmployeeFormContainer.classList.add('hidden'); // Hide the form
     }
 }
-
 // Function to create an employee
 async function createEmployee() {
     const employeeData = {
@@ -96,6 +164,13 @@ async function createEmployee() {
         emergencyContactName: document.getElementById('emergencyContactName').value, // New field
         emergencyContactPhone: document.getElementById('emergencyContactNumber').value // Updated field name
     };
+
+    // Validate inputs
+    const validationErrors = validateEmployeeData(employeeData);
+    if (validationErrors.length > 0) {
+        alert('Please fix the following errors:\n' + validationErrors.join('\n'));
+        return; // Stop execution if there are validation errors
+    }
 
     try {
         const response = await fetch(`${BASE_URL}/employees`, {
@@ -113,8 +188,29 @@ async function createEmployee() {
         console.log('Employee created:', newEmployee);
         alert('Employee created successfully!');
 
-        // Create a contact for the new employee
-        await createContact(newEmployee.employeeId); // Pass the employee ID to create a contact
+        // Check if the contact already exists before creating it
+        const contactResponse = await fetch(`${BASE_URL}/contacts`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                employee: { employeeId: newEmployee.employeeId },
+                name: `${employeeData.firstName} ${employeeData.lastName}`,
+                email: employeeData.email,
+                phoneNumber: employeeData.phoneNumber,
+                department: employeeData.department,
+                emergencyContactName: employeeData.emergencyContactName,
+                emergencyContactPhone: employeeData.emergencyContactPhone
+            })
+        });
+
+        if (!contactResponse.ok) {
+            const contactErrorText = await contactResponse.text();
+            console.warn(`Contact creation failed: ${contactErrorText}`);
+            alert('Contact created successfully!');
+        } else {
+            console.log('Contact created successfully!');
+        }
+
 
         resetForm(); // Reset the form after creation
         getAllEmployees(); // Refresh the employee list
@@ -128,6 +224,19 @@ async function createEmployee() {
         alert('Error creating employee: ' + error.message);
     }
 }
+
+// Function to set the max date to today
+function setMaxDate() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+    const dd = String(today.getDate()).padStart(2, '0');
+    const maxDate = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('employeeJoiningDate').setAttribute('max', maxDate);
+}
+
+// Call the function when the page loads
+window.onload = setMaxDate;
 
 // Function to create a contact for the employee
 async function createContact(employeeId) {
@@ -265,8 +374,16 @@ async function updateEmployee() {
         phoneNumber: document.getElementById('updateEmployeePhoneNumber').value,
         emergencyContactName: document.getElementById('updateEmergencyContactName').value,
         emergencyContactPhone: document.getElementById('updateEmergencyContactNumber').value,
-        department: document.getElementById('updateEmployeeDepartment').value
+        department: document.getElementById('updateEmployeeDepartment').value,
+        dateOfJoining: document.getElementById('employeeJoiningDate').value // Ensure this is included
     };
+
+    // Validate inputs
+    const validationErrors = validateEmployeeData(employeeData);
+    if (validationErrors.length > 0) {
+        alert('Please fix the following errors:\n' + validationErrors.join('\n'));
+        return; // Stop execution if there are validation errors
+    }
 
     try {
         const response = await fetch(`${BASE_URL}/employees/${empId}`, {
@@ -288,6 +405,49 @@ async function updateEmployee() {
     } catch (error) {
         console.error('Error updating employee:', error);
         alert('Error updating employee: ' + error.message);
+    }
+}
+// Function to reset an employee's password
+async function resetEmployeePassword() {
+    const employeeEmail = document.getElementById('resetEmployeeEmail').value.trim();
+    const newPassword = document.getElementById('newPassword').value.trim();
+
+    // Input validation
+    if (!employeeEmail) {
+        alert('Please enter a valid Employee Email.');
+        return;
+    }
+    if (!newPassword) {
+        alert('Please enter a new password.');
+        return;
+    }
+
+    // Show loading indicator (optional)
+    const loadingMessage = document.createElement('div');
+    loadingMessage.innerText = 'Resetting password...';
+    document.body.appendChild(loadingMessage);
+
+    try {
+        const response = await fetch(`${BASE_URL}/employees/reset-password?email=${encodeURIComponent(employeeEmail)}&newPassword=${encodeURIComponent(newPassword)}`, {
+            method: 'PUT',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to reset password: ${errorText}`);
+        }
+
+        alert('Password reset successfully!');
+        document.getElementById('resetPasswordForm').reset(); // Reset the form after successful reset
+    } catch (error) {
+        console.error('Error resetting password:', error);
+        alert('Error resetting password: ' + error.message);
+    } finally {
+        // Remove loading indicator
+        if (loadingMessage) {
+            document.body.removeChild(loadingMessage);
+        }
     }
 }
 
@@ -919,9 +1079,7 @@ function populateTaskDetails(taskId) {
         .catch(error => console.error('Error fetching task details:', error));
 }
 
-// Function to populate the update form with task details
 function populateUpdateForm(taskId) {
-    console.log(`Fetching update form for task ID: ${taskId}`); // Debug log
     fetch(`${BASE_URL}/tasks/${taskId}`, {
         method: 'GET',
         headers: getAuthHeaders()
@@ -933,8 +1091,6 @@ function populateUpdateForm(taskId) {
             return response.json();
         })
         .then(task => {
-            console.log('Fetched task:', task); // Debug log
-
             // Show the form
             document.getElementById('createTaskForm').style.display = 'block';
 
@@ -949,7 +1105,10 @@ function populateUpdateForm(taskId) {
             if (taskNameInput) taskNameInput.value = task.taskName;
             if (descriptionInput) descriptionInput.value = task.description;
             if (dueDateInput) dueDateInput.value = task.dueDate;
-            if (statusSelect) statusSelect.value = task.status;
+            if (statusSelect) {
+                statusSelect.value = task.status;
+                statusSelect.disabled = true; // Disable the status field for admin
+            }
             if (assignedToSelect) assignedToSelect.value = task.assignedTo.employeeId; // Assuming assignedTo is an object
             if (urgentCheckbox) urgentCheckbox.checked = task.urgent;
 
@@ -979,7 +1138,6 @@ function updateTask(taskId) {
         assignedTo: { employeeId: document.getElementById('assignedTo').value },
         description: document.getElementById('description').value,
         dueDate: dueDateInput,
-        status: document.getElementById('status').value,
         urgent: document.getElementById('urgent').checked
     };
 
@@ -1007,14 +1165,21 @@ function updateTask(taskId) {
         .catch(error => console.error('Error updating task:', error));
 }
 
-// Function to create a new task
 function createTask() {
+    const taskName = document.getElementById('taskName').value;
+    const taskNameRegex = /^[a-zA-Z0-9\s.,!?'"()\-;:]+$/; // Updated regex for validation
+
+    if (!taskNameRegex.test(taskName)) {
+        alert('Task name is invalid. Please use only alphanumeric characters, spaces, and common punctuation.');
+        return; // Exit the function if the task name is invalid
+    }
+
     const taskDetails = {
-        taskName: document.getElementById('taskName').value,
+        taskName: taskName,
         assignedTo: { employeeId: document.getElementById('assignedTo').value },
         description: document.getElementById('description').value,
         dueDate: document.getElementById('dueDate').value,
-        status: document.getElementById('status').value || 'Not Started',
+        status: 'Not Started', // Set default status
         urgent: document.getElementById('urgent').checked
     };
 
@@ -1035,10 +1200,8 @@ function createTask() {
         .then(newTask => {
             console.log('Task created successfully:', newTask);
             getAllTasks(); // Refresh the list
-            fetchOverviewData(); // Add this line to update the overview
             resetCreateTaskForm(); // Reset the form after creation
             $('#createTaskForm').hide(); // Hide the create task form
-            $('#taskDetailModal').modal('hide'); // Close the modal after task creation
         })
         .catch(error => console.error('Error creating task:', error));
 }

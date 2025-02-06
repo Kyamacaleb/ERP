@@ -24,11 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/employees")
@@ -49,25 +45,43 @@ public class EmployeeController {
     // Login endpoint
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody Employee loginRequest) {
-        // Authenticate the user
+        // Validate email format
+        if (!employeeService.isValidEmail(loginRequest.getEmail())) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Incorrect email format."));
+        }
+
+        // Check if the employee exists
+        Optional<Employee> employeeOpt = employeeService.getEmployeeByEmail(loginRequest.getEmail());
+        if (employeeOpt.isEmpty()) {
+            // If the email is not found, return an error indicating the email is incorrect
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Incorrect email."));
+        }
+
+        Employee employee = employeeOpt.get();
+
+        // Check if the password meets complexity requirements
+        if (!employeeService.isValidPassword(loginRequest.getPassword())) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Password must be at least 8 characters long and include uppercase letter, lowercase letter, special character, and number."));
+        }
+
+        // Check if the password is correct
+        if (!passwordEncoder.matches(loginRequest.getPassword(), employee.getPassword())) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Incorrect password."));
+        }
+
+        // Set the authentication in the security context
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getEmail(),
                         loginRequest.getPassword()
                 )
         );
-
-        // Set the authentication in the security context
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Log the current user and their authorities
         Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
         System.out.println("Current user: " + currentAuth.getName());
         System.out.println("Authorities: " + currentAuth.getAuthorities());
-
-        // Retrieve the employee details
-        Employee employee = employeeService.getEmployeeByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
 
         // Get the role and employee ID
         String role = "ROLE_" + employee.getRole(); // Add "ROLE_" prefix to the role
@@ -81,21 +95,20 @@ public class EmployeeController {
         Map<String, Object> response = new HashMap<>();
         response.put("jwt", jwt);
         response.put("role", role); // This will now include the "ROLE_" prefix
-
         return ResponseEntity.ok(response);
     }
     // Admin create employee
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<?> createEmployee(@RequestBody Employee employee) {
-        if (employeeService.existsByEmail(employee.getEmail())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Email already exists. Please use a different email.");
+        try {
+            Employee createdEmployee = employeeService.createEmployee(employee);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdEmployee);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        Employee createdEmployee = employeeService.createEmployee(employee);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdEmployee);
     }
+
 
     // Admin update employee
     @PreAuthorize("hasRole('ADMIN')")
@@ -177,40 +190,54 @@ public class EmployeeController {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body("File is empty.");
         }
+        System.out.println("Received file: " + file.getOriginalFilename() + ", size: " + file.getSize());
 
-        // Check if the image is upright
+        int orientation = 1; // Default upright
         try {
             Metadata metadata = ImageMetadataReader.readMetadata(file.getInputStream());
             ExifIFD0Directory directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
 
-            if (directory != null) {
-                int orientation = directory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
-                if (orientation != 1) { // 1 means upright
-                    return ResponseEntity.badRequest().body("Image must be upright.");
-                }
+            if (directory != null && directory.containsTag(ExifIFD0Directory.TAG_ORIENTATION)) {
+                orientation = directory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
             }
-        } catch (IOException | ImageProcessingException | MetadataException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error reading image metadata.");
+        } catch (Exception e) {
+            System.out.println("Error reading image metadata: " + e.getMessage());
+            // Assume upright if metadata cannot be read
         }
 
-        // Logic to save the file
-        String uploadsDir = "src/main/resources/uploads/";
+        if (orientation != 1) {
+            return ResponseEntity.badRequest().body("Image must be upright.");
+        }
+
+        // Use user home directory to create uploads directory (cross-platform)
+        String uploadsDir = System.getProperty("user.home") + "/uploads/";
+        File uploadDir = new File(uploadsDir);
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs(); // Create directory if it doesn't exist
+        }
+
         String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename(); // Unique file name
         File destinationFile = new File(uploadsDir + fileName);
 
         try {
+            // Debugging statement to check file path before saving
+            System.out.println("Saving file to: " + destinationFile.getAbsolutePath());
+
             file.transferTo(destinationFile); // Save the file
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving file.");
         }
 
         // Update the employee's profile picture
-        Employee employee = employeeService.getEmployeeById(id).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+        Employee employee = employeeService.getEmployeeById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
         employee.setProfilePicture(fileName); // Save the file name
         employeeService.updateEmployee(id, employee); // Update employee record
 
         return ResponseEntity.ok("Profile picture uploaded successfully.");
     }
+
+
 
     // Change password for the current employee
     @PreAuthorize("hasRole('EMPLOYEE')")
@@ -220,18 +247,17 @@ public class EmployeeController {
         String newPassword = request.get("newPassword");
         String currentPassword = request.get("currentPassword");
 
-        Employee employee = employeeService.getEmployeeByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+        try {
+            // Assuming you have a method to get the employee ID by email
+            UUID employeeId = employeeService.getEmployeeByEmail(email)
+                    .orElseThrow(() -> new IllegalArgumentException("Employee not found"))
+                    .getEmployeeId();
 
-        // Validate the current password (you may need to implement this logic)
-        if (!passwordEncoder.matches(currentPassword, employee.getPassword())) {
-            return ResponseEntity.badRequest().body("Current password is incorrect.");
+            employeeService.changePassword(employeeId, currentPassword, newPassword);
+            return ResponseEntity.ok("Password changed successfully.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        employee.setPassword(passwordEncoder.encode(newPassword)); // Hash the new password
-        employeeService.updateEmployee(employee.getEmployeeId(), employee); // Update the employee record
-
-        return ResponseEntity.ok("Password changed successfully.");
     }
 
     // Endpoint for getting the profile picture
@@ -242,7 +268,8 @@ public class EmployeeController {
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
 
         String fileName = employee.getProfilePicture();
-        String uploadsDir = "src/main/resources/uploads/";
+        // Use user home directory for storing uploaded images (cross-platform)
+        String uploadsDir = System.getProperty("user.home") + "/uploads/";
 
         // If no profile picture is set, use the default image
         if (fileName == null || fileName.isEmpty()) {
@@ -257,10 +284,25 @@ public class EmployeeController {
         try {
             byte[] imageBytes = Files.readAllBytes(file.toPath());
             return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_PNG) // Adjust based on your image type
+                    .contentType(MediaType.IMAGE_PNG) // Adjust based on your image type (e.g., PNG, JPEG)
                     .body(imageBytes);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @PutMapping("/reset-password")
+    @PreAuthorize("hasRole('ADMIN')") // Restrict access to users with the ADMIN role
+    public ResponseEntity<String> resetPassword(
+            @RequestParam String email,
+            @RequestParam String newPassword) {
+        try {
+            employeeService.resetEmployeePasswordByEmail(email, newPassword);
+            return ResponseEntity.ok("Password reset successfully.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 

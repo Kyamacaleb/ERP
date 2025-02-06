@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         .hidden {
@@ -68,7 +69,7 @@
                 <div class="card-body">
                     <h2 class="section-title">Overview</h2>
                     <div class="row">
-                        <!-- Pendng leave Card -->
+                        <!-- Pending leave Card -->
                         <div class="col-md-4">
                             <div class="card overview-card text-center">
                                 <div class="card-body">
@@ -139,6 +140,7 @@
             </div>
         </div>
 
+        <!-- Edit Profile Modal -->
         <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -153,31 +155,51 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="editFirstName" class="form-label">First Name</label>
-                                    <input type="text" class="form-control" id="editFirstName" required>
+                                    <input type="text" class="form-control" id="editFirstName" required pattern="[A-Za-z\s]+" title="Only letters are allowed">
+                                    <div class="text-danger" id="editFirstNameError"></div> <!-- Error message -->
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="editLastName" class="form-label">Last Name</label>
-                                    <input type="text" class="form-control" id="editLastName" required>
+                                    <input type="text" class="form-control" id="editLastName" required pattern="[A-Za-z\s]+" title="Only letters are allowed">
+                                    <div class="text-danger" id="editLastNameError"></div> <!-- Error message -->
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="editPhone" class="form-label">Phone Number</label>
-                                    <input type="text" class="form-control" id="editPhone" required>
+                                    <input type="text" class="form-control" id="editPhone" required pattern="^(\\+254(10[0-9]|11[0-9]|7[0-9]{8})|07[0-9]{8}|011[0-9]{8})$" title="Invalid phone number format">
+                                    <div class="text-danger" id="editPhoneError"></div> <!-- Error message -->
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="editDepartment" class="form-label">Department</label>
-                                    <input type="text" class="form-control" id="editDepartment" required>
+                                    <select class="form-control" id="editDepartment" required>
+                                        <option value="" disabled selected>Select a department</option>
+                                        <option value="HR">HR</option>
+                                        <option value="ADMIN">Admin</option>
+                                        <option value="ACCOUNTS">Accounts</option>
+                                        <option value="QA">QA</option>
+                                        <option value="SOFTWARE_DEVELOPMENT">Software Development</option>
+                                    </select>
+                                    <div class="text-danger" id="editDepartmentError"></div> <!-- Error message -->
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="editEmergencyContactName" class="form-label">Emergency Contact Name</label>
-                                    <input type="text" class="form-control" id="editEmergencyContactName" required>
+                                    <input type="text" class="form-control" id="editEmergencyContactName" required pattern="[A-Za-z\s]+" title="Only letters are allowed">
+                                    <div class="text-danger" id="editEmergencyContactNameError"></div> <!-- Error message -->
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="editEmergencyContactPhone" class="form-label">Emergency Contact Phone</label>
-                                    <input type="text" class="form-control" id="editEmergencyContactPhone" required>
+                                    <input type="text" class="form-control" id="editEmergencyContactPhone" required pattern="^(\\+254(10[0-9]|11[0-9]|7[0-9]{8})|07[0-9]{8}|011[0-9]{8})$" title="Invalid phone number format">
+                                    <div class="text-danger" id="editEmergencyContactPhoneError"></div> <!-- Error message -->
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="editDateOfJoining" class="form-label">Date of Joining</label>
+                                    <input type="date" class="form-control" id="editDateOfJoining" required>
+                                    <div class="text-danger" id="editDateOfJoiningError"></div> <!-- Error message -->
                                 </div>
                             </div>
                             <div class="d-grid gap-2 mt-4">
@@ -191,6 +213,7 @@
             </div>
         </div>
 
+        <!-- Change Password Modal -->
         <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -205,10 +228,12 @@
                             <div class="mb-3">
                                 <label for="currentPassword" class="form-label">Current Password</label>
                                 <input type="password" class="form-control" id="currentPassword" required>
+                                <label for="toggleCurrentPassword"></label><input type="checkbox" id="toggleCurrentPassword" onclick="togglePasswordVisibility('currentPassword', 'toggleCurrentPassword')"> Show Password
                             </div>
                             <div class="mb-3">
                                 <label for="newPassword" class="form-label">New Password</label>
                                 <input type="password" class="form-control" id="newPassword" required>
+                                <label for="toggleNewPassword"></label><input type="checkbox" id="toggleNewPassword" onclick="togglePasswordVisibility('newPassword', 'toggleNewPassword')"> Show Password
                             </div>
                             <div class="d-grid gap-2 mt-4">
                                 <button type="submit" class="btn btn-primary">
@@ -221,6 +246,7 @@
             </div>
         </div>
 
+        <!-- Profile Picture Upload -->
         <div class="modal fade" id="uploadProfilePictureModal" tabindex="-1" aria-labelledby="uploadProfilePictureModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -232,14 +258,6 @@
                     </div>
                     <div class="modal-body">
                         <input type="file" id="profilePictureUpload" accept="image/*" class="form-control">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-2"></i>Close
-                        </button>
-                        <button type="button" class="btn btn-primary" onclick="uploadProfilePicture()">
-                            <i class="fas fa-upload me-2"></i>Upload
-                        </button>
                     </div>
                 </div>
             </div>
@@ -442,6 +460,7 @@
                                         <th>Status</th>
                                         <th>Urgent</th>
                                         <th>Actions</th>
+
                                     </tr>
                                     </thead>
                                     <tbody id="taskTableBody">
@@ -521,6 +540,7 @@
                 </div>
             </div>
         </div>
+
 
         <!-- Task View Modal -->
         <div class="modal fade" id="taskViewModal" tabindex="-1" aria-labelledby="taskViewModalLabel" aria-hidden="true">

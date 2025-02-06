@@ -12,4 +12,5 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     // Method to find an employee by name
     Optional<Employee> findByFirstNameAndLastName(String firstName, String lastName);
     Optional<Employee> findByRole(String role);
+    Optional<Object> findByEmail(String email);
 }

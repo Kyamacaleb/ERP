@@ -74,6 +74,11 @@ public class LeaveService {
         // 7. Save the leave request
         Leave savedLeave = leaveRepository.save(leaveRequest);
 
+        // 8. Validate the reason to ensure it contains only alphabetic characters, spaces, and certain punctuation
+        if (!leaveRequest.getReason().matches("[a-zA-Z0-9.,!\\s]+")) {
+            throw new IllegalArgumentException("Reason can only contain alphabetic letters, numbers, spaces, commas, periods, and exclamation marks.");
+        }
+
         // Send notification to employee
         String employeeMessage = "Your leave request has been submitted and is pending approval.";
         notificationService.sendEmployeeNotification(employeeMessage);
@@ -221,6 +226,11 @@ public class LeaveService {
         existingLeave.setDaysTaken((int) daysBetween); // Set the number of days taken
         existingLeave.setDaysAllocated(21); // Set the allocated days (constant value)
 
+        // 8. Validate the reason to ensure it contains only alphabetic characters, spaces, and certain punctuation
+        if (!leaveRequest.getReason().matches("[a-zA-Z0-9.,!\\s]+")) {
+            throw new IllegalArgumentException("Reason can only contain alphabetic letters, numbers, spaces, commas, periods, and exclamation marks.");
+        }
+
         // Save the updated leave request
         Leave updatedLeave = leaveRepository.save(existingLeave);
 
@@ -249,9 +259,31 @@ public class LeaveService {
             throw new IllegalArgumentException("Only approved leave requests can be recalled.");
         }
 
+        // Restore the days taken back to the employee's leave balance
+        Employee employee = leave.getEmployee();
+        switch (leave.getLeaveType()) {
+            case "Sick":
+                employee.setSickLeaveBalance(employee.getSickLeaveBalance() + leave.getDaysTaken());
+                break;
+            case "Vacation":
+                employee.setVacationLeaveBalance(employee.getVacationLeaveBalance() + leave.getDaysTaken());
+                break;
+            case "Paternity/Maternity":
+                employee.setPaternityLeaveBalance(employee.getPaternityLeaveBalance() + leave.getDaysTaken());
+                break;
+            case "Compassionate":
+                employee.setCompassionateLeaveBalance(employee.getCompassionateLeaveBalance() + leave.getDaysTaken());
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid leave type.");
+        }
+
         // Update the status to "Recalled"
         leave.setStatus("Recalled");
         leaveRepository.save(leave);
+
+        // Update employee balances in the database
+        employeeService.updateEmployee(employee.getEmployeeId(), employee);
 
         // Send notification to employee
         String employeeMessage = "Your leave request has been recalled.";

@@ -20,6 +20,12 @@ public class ContactService {
     private NotificationService notificationService; // Inject NotificationService
 
     public Contact createContactForEmployee(Employee employee) {
+        // Check if a contact already exists for this employee
+        Optional<Contact> existingContactOpt = getContactByEmployee(employee);
+        if (existingContactOpt.isPresent()) {
+            throw new IllegalArgumentException("Contact already exists for this employee.");
+        }
+
         Contact contact = new Contact();
         contact.setEmployee(employee);
         contact.setName(employee.getFirstName() + " " + employee.getLastName());
@@ -80,6 +86,11 @@ public class ContactService {
     }
 
     public Contact createContact(Contact contact) {
+        // Check if a contact already exists for this employee
+        Optional<Contact> existingContactOpt = getContactByEmployee(contact.getEmployee());
+        if (existingContactOpt.isPresent()) {
+            throw new IllegalArgumentException("Contact already exists for this employee.");
+        }
         // Logic to save the contact to the database
         return contactRepository.save(contact);
     }

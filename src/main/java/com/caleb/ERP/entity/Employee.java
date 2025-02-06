@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate; // Import LocalDate
 import java.util.UUID;
 
 @Data
@@ -40,7 +41,7 @@ public class Employee {
     private String department;
 
     @Column(name = "date_of_joining")
-    private String dateOfJoining;
+    private LocalDate dateOfJoining; // Change to LocalDate
 
     @Column(name = "profile_picture")
     private String profilePicture; // Field for profile picture
@@ -74,5 +75,4 @@ public class Employee {
     public String getFullName() {
         return firstName + " " + lastName;
     }
-
 }

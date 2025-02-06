@@ -56,7 +56,7 @@
     <div class="collapse navbar-collapse" id="navbarNav">
         <span class="navbar-text mr-auto"></span>
         <span id="activeSection" class="navbar-text"></span>
-        <a href="#notificationArea" class="btn btn-secondary" id="notificationLink">
+        <a href="#" class="btn btn-secondary" id="notificationLink" onclick="showSection('notificationManagement')">
             <i class="fas fa-bell"></i>
             <span id="notificationCount" class="badge badge-light">0</span>
         </a>
@@ -73,30 +73,38 @@
             <div class="row text-center">
                 <div class="col-md-3">
                     <div class="border-primary p-3">
-                        <i class="fas fa-users fa-3x text -primary"></i>
+                        <i class="fas fa-users fa-3x text-primary"></i>
                         <h6 class="card-title">Total Employees</h6>
-                        <h2 id="totalEmployees">0</h2>
+                        <a href="#" onclick="showSection('employeeManagement')">
+                            <h2 id="totalEmployees">0</h2>
+                        </a>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="border-success p-3">
                         <i class="fas fa-calendar-alt fa-3x text-success"></i>
                         <h6 class="card-title">Total Leaves</h6>
-                        <h2 id="totalLeaves">0</h2>
+                        <a href="#" onclick="showSection('leaveManagement')">
+                            <h2 id="totalLeaves">0</h2>
+                        </a>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="border-warning p-3">
                         <i class="fas fa-tasks fa-3x text-warning"></i>
                         <h6 class="card-title">Total Tasks</h6>
-                        <h2 id="totalTasks">0</h2>
+                        <a href="#" onclick="showSection('taskManagement')">
+                            <h2 id="totalTasks">0</h2>
+                        </a>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="border-danger p-3">
                         <i class="fas fa-money-bill-wave fa-3x text-danger"></i>
                         <h6 class="card-title">Total Finance Records</h6>
-                        <h2 id="totalFinanceRecords">0</h2>
+                        <a href="#" onclick="showSection('financeManagement')">
+                            <h2 id="totalFinanceRecords">0</h2>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -115,20 +123,27 @@
                 <form id="createEmployeeForm">
                     <div class="form-group">
                         <label for="employeeName">First Name</label>
-                        <input type="text" class="form-control" id="employeeName" required>
+                        <input type="text" class="form-control" id="employeeName" required pattern="[A-Za-z\s'-]+" title="First name must contain only alphabetic characters, spaces, hyphens, or apostrophes.">
+                        <div class="text-danger" id="employeeNameError"></div> <!-- Error message container -->
                     </div>
                     <div class="form-group">
                         <label for="employeeLastName">Last Name</label>
-                        <input type="text" class="form-control" id="employeeLastName" required>
+                        <input type="text" class="form-control" id="employeeLastName" required pattern="[A-Za-z\s'-]+" title="Last name must contain only alphabetic characters, spaces, hyphens, or apostrophes.">
+                        <div class="text-danger" id="employeeLastNameError"></div> <!-- Error message container -->
                     </div>
                     <div class="form-group">
                         <label for="employeeEmail">Email</label>
-                        <input type="email" class="form-control" id="employeeEmail" required>
+                        <input type="email" class="form-control" id="employeeEmail" required
+                               pattern="^[A-Za-z0-9+_.-]+@(.+)$" title="Please enter a valid email address (e.g., user@example.com)">
+                        <div class="text-danger" id="employeeEmailError"></div> <!-- Error message container -->
                     </div>
                     <div class="form-group">
                         <label for="employeePassword">Password</label>
-                        <input type="password" class="form-control" id="employeePassword" required>
-                        <label for="showPassword"></label><input type="checkbox" id="showPassword" onclick="togglePasswordVisibility('employeePassword', 'showPassword')"> Show Password
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="employeePassword" required
+                                   pattern="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$" title="Password must be at least 8 characters long, include at least one uppercase letter, one lowercase letter, one digit, and one special character.">
+                        </div>
+                        <div class="text-danger" id="employeePasswordError"></div> <!-- Error message container -->
                     </div>
                     <div class="form-group">
                         <label for="employeeRole">Role</label>
@@ -139,7 +154,9 @@
                     </div>
                     <div class="form-group">
                         <label for="employeePhoneNumber">Phone Number</label>
-                        <input type="text" class="form-control" id="employeePhoneNumber" required>
+                        <input type="text" class="form-control" id="employeePhoneNumber" required
+                               pattern="^(\+254(10[0-9]|11[0-9]|7[0-9]{8})|07[0-9]{8}|010[0-9]{8}|011[0-9]{8})$" title="Phone number must be in the correct format.">
+                        <div class="text-danger" id="employeePhoneNumberError"></div> <!-- Error message container -->
                     </div>
                     <div class="form-group">
                         <label for="employeeDepartment">Department</label>
@@ -154,14 +171,18 @@
                     <div class="form-group">
                         <label for="employeeJoiningDate">Date of Joining</label>
                         <input type="date" class="form-control" id="employeeJoiningDate" required>
+                        <div class="text-danger" id="employeeJoiningDateError"></div> <!-- Error message container -->
                     </div>
                     <div class="form-group">
                         <label for="emergencyContactName">Emergency Contact Name</label>
-                        <input type="text" class="form-control" id="emergencyContactName" required>
+                        <input type="text" class="form-control" id="emergencyContactName" required pattern="[A-Za-z\s'-]+" title="Emergency contact name must contain only alphabetic characters, spaces, hyphens, or apostrophes.">
+                        <div class="text-danger" id="emergencyContactNameError"></div> <!-- Error message container -->
                     </div>
                     <div class="form-group">
                         <label for="emergencyContactNumber">Emergency Contact Number</label>
-                        <input type="text" class="form-control" id="emergencyContactNumber" required>
+                        <input type="text" class="form-control" id="emergencyContactNumber" required
+                               pattern="^(\+254(10[0-9]|11[0-9]|7[0-9]{8})|07[0-9]{8}|010[0-9]{8}|011[0-9]{8})$" title="Emergency contact number must be in the correct format.">
+                        <div class="text-danger" id="emergencyContactNumberError"></div> <!-- Error message container -->
                     </div>
                     <button type="button" class="btn btn-primary" onclick="createEmployee()">Create Employee</button>
                 </form>
@@ -193,6 +214,32 @@
                     </table>
                 </div>
             </div>
+
+            <hr>
+
+            <h6>Reset Employee Password</h6>
+            <form id="resetPasswordForm">
+                <div class="form-group">
+                    <label for="resetEmployeeEmail">Employee Email</label>
+                    <input type="email" class="form-control" id="resetEmployeeEmail" required placeholder="Enter Employee Email">
+                    <div class="text-danger" id="resetEmployeeEmailError"></div> <!-- Error message container -->
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="newPassword" required
+                               pattern="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$"
+                               title="Password must be at least 8 characters long, include at least one uppercase letter, one lowercase letter, one digit, and one special character.">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" id="toggleNewPassword" onclick="togglePasswordVisibility('newPassword', 'eyeIconNewPassword')">
+                                <i class="fa fa-eye" id="eyeIconNewPassword"></i> <!-- Font Awesome eye icon -->
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-danger" id="newPasswordError"></div> <!-- Error message container -->
+                </div>
+                <button type="button" class="btn btn-warning" onclick="resetEmployeePassword()">Reset Password</button>
+            </form>
         </div>
     </div>
 
@@ -210,23 +257,30 @@
                     <form id="updateEmployeeForm">
                         <div class="form-group">
                             <label for="updateEmployeeName">First Name</label>
-                            <input type="text" class="form-control" id="updateEmployeeName" required>
+                            <input type="text" class="form-control" id="updateEmployeeName" required pattern="[A-Za-z\s'-]+" title="First name must contain only alphabetic characters, spaces, hyphens, or apostrophes.">
+                            <div class="text-danger" id="updateEmployeeNameError"></div> <!-- Error message container -->
                         </div>
                         <div class="form-group">
                             <label for="updateEmployeeLastName">Last Name</label>
-                            <input type="text" class="form-control" id="updateEmployeeLastName" required>
+                            <input type="text" class="form-control" id="updateEmployeeLastName" required pattern="[A-Za-z\s'-]+" title="Last name must contain only alphabetic characters, spaces, hyphens, or apostrophes.">
+                            <div class="text-danger" id="updateEmployeeLastNameError"></div> <!-- Error message container -->
                         </div>
                         <div class="form-group">
                             <label for="updateEmployeePhoneNumber">Phone Number</label>
-                            <input type="text" class="form-control" id="updateEmployeePhoneNumber" required>
+                            <input type="text" class="form-control" id="updateEmployeePhoneNumber" required
+                                   pattern="^(\+254(10[0-9]|11[0-9]|7[0-9]{8})|07[0-9]{8}|010[0-9]{8}|011[0-9]{8})$" title="Phone number must be in the correct format.">
+                            <div class="text-danger" id="updateEmployeePhoneNumberError"></div> <!-- Error message container -->
                         </div>
                         <div class="form-group">
                             <label for="updateEmergencyContactName">Emergency Contact Name</label>
-                            <input type="text" class="form-control" id="updateEmergencyContactName" required>
+                            <input type="text" class="form-control" id="updateEmergencyContactName" required pattern="[A-Za-z\s'-]+" title="Emergency contact name must contain only alphabetic characters, spaces, hyphens, or apostrophes.">
+                            <div class="text-danger" id="updateEmergencyContactNameError"></div> <!-- Error message container -->
                         </div>
                         <div class="form-group">
                             <label for="updateEmergencyContactNumber">Emergency Contact Phone</label>
-                            <input type="text" class="form-control" id="updateEmergencyContactNumber" required>
+                            <input type="text" class="form-control" id="updateEmergencyContactNumber" required
+                                   pattern="^(\+254(10[0-9]|11[0-9]|7[0-9]{8})|07[0-9]{8}|010[0-9]{8}|011[0-9]{8})$" title="Emergency contact number must be in the correct format.">
+                            <div class="text-danger" id="updateEmergencyContactNumberError"></div> <!-- Error message container -->
                         </div>
                         <div class="form-group">
                             <label for="updateEmployeeDepartment">Department</label>
@@ -408,6 +462,7 @@
                         <th>Status</th>
                         <th>Urgent</th>
                         <th>Actions</th>
+
                     </tr>
                     </thead>
                     <tbody id="taskTableBody">
@@ -445,15 +500,6 @@
                         <label for="dueDate">Due Date</label>
                         <input type="date" class="form-control" id="dueDate" required aria-describedby="dueDateHelp">
                         <small id="dueDateHelp" class="form-text text-muted">Select the due date for the task.</small>
-                    </div>
-                    <div class="form-group col-md-6">
-                        <label for="status">Status</label>
-                        <select class="form-control" id="status" required aria-describedby="statusHelp">
-                            <option value="not_started">Not Started</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                        </select>
-                        <small id="statusHelp" class="form-text text-muted">Select the current status of the task.</small>
                     </div>
                 </div>
                 <div class="form-group">
@@ -546,10 +592,22 @@
         }
     }
 
-    function togglePasswordVisibility(passwordFieldId, checkboxId) {
+    function togglePasswordVisibility(passwordFieldId, toggleButtonId) {
         const passwordField = document.getElementById(passwordFieldId);
-        const checkbox = document.getElementById(checkboxId);
-        passwordField.type = checkbox.checked ? 'text' : 'password';
+        const toggleButton = document.getElementById(toggleButtonId);
+        const eyeIcon = toggleButton.querySelector('i');
+
+        // Determine the visibility state based on the checkbox
+        if (passwordField.type === "password") {
+            passwordField.type = "text"; // Change to text to show password
+            eyeIcon.classList.remove('fa-eye'); // Change icon to eye-slash
+            eyeIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordField.type = "password"; // Change back to password to hide
+            eyeIcon.classList.remove('fa-eye-slash'); // Change icon back to eye
+            eyeIcon.classList.add('fa-eye');
+        }
+
     }
     // Function to toggle dark mode
     document.getElementById('toggleDarkMode').addEventListener('click', function() {

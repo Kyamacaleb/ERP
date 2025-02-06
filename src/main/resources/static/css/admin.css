@@ -219,3 +219,12 @@ h5, h6 {
     background-color: #e0e0e0; /* Light gray background for read notifications */
     text-decoration: line-through; /* Optional: strikethrough for read notifications */
 }
+/* Style to grey out future dates */
+input[type="date"]:disabled {
+    background-color: #f0f0f0;
+    color: #a0a0a0;
+}
+.urgent-checkbox {
+    accent-color: red; /* Change the color of the checkbox */
+    transform: scale(1.5); /* Make the checkbox larger */
+}

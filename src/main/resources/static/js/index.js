@@ -12,13 +12,15 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     // Validate email format
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(email)) {
+        document.getElementById('emailError').innerText = 'Incorrect email format.';
         document.getElementById('emailError').style.display = 'block';
         return;
     }
 
     // Validate password format
-    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{8,}$/; // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[@#$%^&+=!]).{8,}$/; // At least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
     if (!passwordPattern.test(password)) {
+        document.getElementById('passwordError').innerText = 'Password must be at least 8 characters long and include uppercase letter, lowercase letter, special character, and number.';
         document.getElementById('passwordError').style.display = 'block';
         return;
     }
@@ -38,17 +40,29 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     })
         .then(response => {
             if (!response.ok) {
-                if (response.status === 401) {
-                    console.error('Invalid credentials');
-                    throw new Error('Invalid credentials');
-                } else {
-                    console.error('Login failed with status:', response.status);
-                    throw new Error ('Login failed');
-                }
+                return response.json().then(errorData => {
+                    // Check if errorData is defined and has an error property
+                    if (errorData && errorData.error) {
+                        if (errorData.error === 'Incorrect email format.') {
+                            document.getElementById('emailError').innerText = 'Incorrect email format. Please enter a valid email format.';
+                            document.getElementById('emailError').style.display = 'block';
+                        } else if (errorData.error === 'Incorrect email.') {
+                            document.getElementById('emailError').innerText = 'Incorrect email. Please check your email.';
+                            document.getElementById('emailError').style.display = 'block';
+                        } else if (errorData.error === 'Incorrect password.') {
+                            document.getElementById('passwordError').innerText = 'Incorrect password. Please enter the correct password.';
+                            document.getElementById('passwordError').style.display = 'block';
+                        } else {
+                            document.getElementById('error-message').innerText = 'Wrong credentials used. Please check your credentials.';
+                            document.getElementById('error-message').style.display = 'block';
+                        }
+                    }
+                });
             }
             return response.json();
         })
         .then(data => {
+            // Handle successful login
             console.log('Login response data:', data);
             localStorage.setItem('jwt', data.jwt);
 
@@ -56,7 +70,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             const role = tokenPayload.role;
             console.log('User  role:', role);
 
-            // Check for the role with the "ROLE_" prefix
+            // Redirect based on role
             if (role === 'ROLE_ADMIN') {
                 window.location.href = '/admin-dashboard';
             } else if (role === 'ROLE_EMPLOYEE') {
@@ -64,13 +78,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             } else {
                 alert('Unknown role. Please contact support.');
             }
-        })
-        .catch(error => {
-            console.error('Error during login:', error);
-            document.getElementById('error-message').innerText = 'Login failed. Please check your credentials and try again.';
-            document.getElementById('error-message').style.display = 'block';
         });
-
 });
 
 // Password visibility toggle
