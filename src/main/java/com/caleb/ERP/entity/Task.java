@@ -5,9 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -51,26 +48,5 @@ public class Task {
     @Transient
     private String assignedByName; // Name of the employee who assigned the task
 
-    @Column(name = "extension_requested")
-    private boolean extensionRequested; // Flag to indicate if an extension has been requested
-
-    @Column(name = "extension_reason")
-    private String extensionReason; // Reason for the extension request
-
-    @Column(name = "new_due_date")
-    private String newDueDate; // New due date if the extension is approved
-
-    @Column(name = "request_timestamp")
-    private LocalDateTime requestTimestamp; // Timestamp when the extension was requested
-
-    @Column(name = "approval_timestamp")
-    private LocalDateTime approvalTimestamp; // Timestamp when the request was approved or rejected
-
-    @ManyToOne
-    @JoinColumn(name = "approved_by")
-    private Employee approvedBy; // Employee who approved the extension request
-
-    @Column(name = "approval_status")
-    private String approvalStatus; // e.g., "Approved", "Rejected"
 
 }

@@ -71,34 +71,34 @@
                     <div class="row">
                         <!-- Pending leave Card -->
                         <div class="col-md-4">
-                            <div class="card overview-card text-center">
+                            <a href="#" onclick="showSection('leaveManagement')" class="card overview-card text-center">
                                 <div class="card-body">
                                     <i class="fas fa-calendar-alt card-icon"></i>
                                     <h5 class="card-title">Pending Leaves</h5>
                                     <p id="pendingLeavesCount" class="card-text">0</p> <!-- Initialized to 0 -->
                                 </div>
-                            </div>
+                            </a>
                         </div>
 
                         <!-- Pending Finance Requests Card -->
                         <div class="col-md-4">
-                            <div class="card overview-card text-center">
+                            <a href="#" onclick="showSection('financeManagement')" class="card overview-card text-center">
                                 <div class="card-body">
                                     <i class="fas fa-money-bill-wave card-icon"></i>
                                     <h5 class="card-title">Pending Finances</h5>
                                     <p id="pendingFinancesCount" class="card-text">0</p> <!-- Initialized to 0 -->
                                 </div>
-                            </div>
+                            </a>
                         </div>
                         <!-- Pending Task Requests Card -->
                         <div class="col-md-4">
-                            <div class="card overview-card text-center">
+                            <a href="#" onclick="showSection('taskManagement')" class="card overview-card text-center">
                                 <div class="card-body">
                                     <i class="fas fa-tasks card-icon"></i>
                                     <h5 class="card-title">Pending Tasks</h5>
                                     <p id="pendingTasksCount" class="card-text">0</p> <!-- Initialized to 0 -->
                                 </div>
-                            </div>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -562,6 +562,8 @@
                 </div>
             </div>
         </div>
+
+
 
         <div class="dashboard-section hidden" id="financeManagement">
             <div class="card mb-4">

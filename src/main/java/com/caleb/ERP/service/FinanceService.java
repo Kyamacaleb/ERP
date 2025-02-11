@@ -55,11 +55,13 @@ public class FinanceService {
         Finance savedFinance = financeRepository.save(finance);
 
         // Send notification to admins
-        String adminMessage = "A new finance record has been created: " + savedFinance.getPurpose();
+        String adminMessage = String.format("A new finance record has been created by %s: %s (Amount: KES %.2f, Type: %s). Please review it.",
+                savedFinance.getEmployee().getFullName(), savedFinance.getPurpose(), savedFinance.getAmount(), savedFinance.getType());
         notificationService.sendAdminNotification(adminMessage);
 
         // Send notification to employee
-        String employeeMessage = "Your finance record has been created: " + savedFinance.getPurpose();
+        String employeeMessage = String.format("Your finance record has been successfully created: %s (Amount: KES %.2f). It is currently pending approval.",
+                savedFinance.getPurpose(), savedFinance.getAmount());
         notificationService.sendEmployeeNotification(employeeMessage);
 
         return savedFinance;
@@ -84,11 +86,13 @@ public class FinanceService {
         Finance updatedFinance = financeRepository.save(finance);
 
         // Send notification to admins
-        String adminMessage = "Finance record updated: " + updatedFinance.getPurpose();
+        String adminMessage = String.format("The finance record for %s has been updated: %s (New Amount: KES %.2f). Please review the changes.",
+                updatedFinance.getEmployee().getFullName(), updatedFinance.getPurpose(), updatedFinance.getAmount());
         notificationService.sendAdminNotification(adminMessage);
 
         // Send notification to employee
-        String employeeMessage = "Your finance record has been updated: " + updatedFinance.getPurpose();
+        String employeeMessage = String.format("Your finance record has been updated successfully: %s (New Amount: KES %.2f).",
+                updatedFinance.getPurpose(), updatedFinance.getAmount());
         notificationService.sendEmployeeNotification(employeeMessage);
 
         return updatedFinance;
@@ -104,11 +108,13 @@ public class FinanceService {
         financeRepository.save(finance); // Save the updated record
 
         // Send notification to admins
-        String adminMessage = "Finance record deleted: " + finance.getPurpose();
+        String adminMessage = String.format("The finance record for %s has been marked as deleted: %s (Amount: KES %.2f).",
+                finance.getEmployee().getFullName(), finance.getPurpose(), finance.getAmount());
         notificationService.sendAdminNotification(adminMessage);
 
         // Send notification to employee
-        String employeeMessage = "Your finance record has been deleted: " + finance.getPurpose();
+        String employeeMessage = String.format("Your finance record has been marked as deleted: %s (Amount: KES %.2f). If this was a mistake, please contact support.",
+                finance.getPurpose(), finance.getAmount());
         notificationService.sendEmployeeNotification(employeeMessage);
     }
 
@@ -128,11 +134,13 @@ public class FinanceService {
         financeRepository.save(finance);
 
         // Send notification to admins
-        String adminMessage = "Finance record approved: " + finance.getPurpose();
+        String adminMessage = String.format("The finance record for %s has been approved: %s (Amount: KES %.2f).",
+                finance.getEmployee().getFullName(), finance.getPurpose(), finance.getAmount());
         notificationService.sendAdminNotification(adminMessage);
 
-        // Send notification to employee
-        String employeeMessage = "Your finance record has been approved: " + finance.getPurpose();
+// Send notification to employee
+        String employeeMessage = String.format("Congratulations! Your finance record has been approved: %s (Amount: KES %.2f). You can now proceed with your plans.",
+                finance.getPurpose(), finance.getAmount());
         notificationService.sendEmployeeNotification(employeeMessage);
     }
 
@@ -152,11 +160,13 @@ public class FinanceService {
         financeRepository.save(finance);
 
         // Send notification to admins
-        String adminMessage = "Finance record rejected: " + finance.getPurpose();
+        String adminMessage = String.format("The finance record for %s has been rejected: %s (Amount: KES %.2f).",
+                finance.getEmployee().getFullName(), finance.getPurpose(), finance.getAmount());
         notificationService.sendAdminNotification(adminMessage);
 
-        // Send notification to employee
-        String employeeMessage = "Your finance record has been rejected: " + finance.getPurpose();
+// Send notification to employee
+        String employeeMessage = String.format("Unfortunately, your finance record has been rejected: %s (Amount: KES %.2f). Please contact the admin.",
+                finance.getPurpose(), finance.getAmount());
         notificationService.sendEmployeeNotification(employeeMessage);
     }
 
@@ -215,12 +225,10 @@ public class FinanceService {
         financeRepository.save(finance); // Save the updated record
 
         // Send notification to admins
-        String adminMessage = "Finance record restored: " + finance.getPurpose();
+        String adminMessage = String.format("The finance record for %s has been restored: %s (Amount: KES %.2f).",
+                finance.getEmployee().getFullName(), finance.getPurpose(), finance.getAmount());
         notificationService.sendAdminNotification(adminMessage);
 
-        // Send notification to employee
-        String employeeMessage = "Your finance record has been restored: " + finance.getPurpose();
-        notificationService.sendEmployeeNotification(employeeMessage);
     }
 
     public List<Finance> getPendingFinancesByCurrentEmployee(UUID employeeId) {

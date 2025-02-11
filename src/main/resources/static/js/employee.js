@@ -1,5 +1,5 @@
 // Base URL for API requests
-const BASE_URL = 'http://192.168.100.39:8082'; // Adjust this to your actual backend URL
+const BASE_URL = 'http://localhost:8082'; // Adjust this to your actual backend URL
 
 // Function to fetch and display all overview counts
 async function fetchOverviewCounts() {
@@ -1166,7 +1166,7 @@ let notifications = []; // Store notifications in an array
 
 function connectWebSocket() {
     const token = localStorage.getItem('jwt'); // Retrieve the JWT from local storage
-    const socket = new SockJS(`http://192.168.100.39:8082/notifications?token=${token}`); // Include token in the URL
+    const socket = new SockJS(`http://localhost:8082/notifications?token=${token}`); // Include token in the URL
     stompClient = Stomp.over(socket);
 
     stompClient.connect({}, function (frame) {
@@ -1185,17 +1185,38 @@ function handleNotification(notification) {
     console.log('New notification:', notification); // Debugging log
 
     // Check if notification has the expected structure
-    if (!notification.message) {
-        console.error('Notification does not have a message property:', notification);
+    if (!notification.message || !notification.timestamp) {
+        console.error('Notification does not have the required properties:', notification);
         return;
+    }
+
+    // Check for duplicates before adding
+    const exists = notifications.some(n => n.message === notification.message && n.timestamp === notification.timestamp);
+    if (exists) {
+        console.log('Duplicate notification, not adding:', notification);
+        return; // Exit if it's a duplicate
     }
 
     // Add the notification to the notifications array with a read status
     notifications.push({ ...notification, read: false });
+    saveNotifications(); // Save notifications to localStorage
 
     // Display the notification
     displayNotifications();
     updateNotificationCount(); // Update the notification count
+}
+
+// Function to save notifications to localStorage
+function saveNotifications() {
+    localStorage.setItem('notifications', JSON.stringify(notifications));
+}
+
+// Function to load notifications from localStorage
+function loadNotifications() {
+    const savedNotifications = localStorage.getItem('notifications');
+    if (savedNotifications) {
+        notifications = JSON.parse(savedNotifications);
+    }
 }
 
 // Function to display notifications
@@ -1206,36 +1227,39 @@ function displayNotifications() {
     notifications.forEach((notification, index) => {
         const notificationItem = document.createElement('div');
         notificationItem.className = `alert alert-info ${notification.read ? 'read' : ''}`; // Add a class if read
-        notificationItem.innerText = notification.message; // Adjust based on your notification structure
+        notificationItem.innerText = `${notification.message} (Received at: ${new Date(notification.timestamp).toLocaleString()})`; // Display message and timestamp
 
-        // Add a button to mark this notification as read
-        const markAsReadButton = document.createElement('button');
-        markAsReadButton.className = 'btn btn-success btn-sm float-right';
-        markAsReadButton.innerText = 'Mark as Read';
-        markAsReadButton.onclick = function() {
-            markNotificationAsRead(index); // Mark this notification as read
-        };
+        // Only add the button if the notification is not read
+        if (!notification.read) {
+            const markAsReadButton = document.createElement('button');
+            markAsReadButton.className = 'btn btn-success btn-sm float-right';
+            markAsReadButton.innerText = 'Mark as Read';
+            markAsReadButton.onclick = function () {
+                markNotificationAsRead(index);  // Mark this notification as read
+            };
 
-        notificationItem.appendChild(markAsReadButton); // Append the button
+            notificationItem.appendChild(markAsReadButton); // Append the button
+        }
+
         notificationDisplayArea.appendChild(notificationItem); // Append the notification item
     });
-}
 
-// Function to update the notification count
-function updateNotificationCount() {
-    const notificationCountElement = document.getElementById('notificationCount');
-    notificationCountElement.innerText = notifications.filter(n => !n.read).length; // Count unread notifications
+    // Update the notification count
+    notificationCount = notifications.filter(n => !n.read).length; // Count unread notifications
+    document.getElementById('notificationCount').innerText = notificationCount;
 }
 
 // Function to mark a specific notification as read
 function markNotificationAsRead(index) {
     notifications[index].read = true; // Set the read status to true
+    saveNotifications(); // Save updated notifications to localStorage
     displayNotifications(); // Refresh the display
 }
 
 // Mark all notifications as read
 document.getElementById('markAllAsRead').addEventListener('click', function () {
     notifications.forEach(notification => notification.read = true); // Mark all as read
+    saveNotifications(); // Save updated notifications to localStorage
     displayNotifications(); // Refresh the display
 });
 
@@ -1243,4 +1267,17 @@ document.getElementById('markAllAsRead').addEventListener('click', function () {
 document.getElementById('notificationButton').addEventListener('click', function() {
     showSection('notificationManagement'); // Show the notification section
 });
+
+// Function to update the notification count display
+function updateNotificationCount() {
+    notificationCount = notifications.filter(n => !n.read).length; // Count unread notifications
+    document.getElementById('notificationCount').innerText = notificationCount;
+}
+
+// Load notifications when the page is loaded
+window.onload = function() {
+    loadNotifications(); // Load notifications from localStorage
+    displayNotifications(); // Display loaded notifications
+    connectWebSocket(); // Connect to WebSocket
+};
 

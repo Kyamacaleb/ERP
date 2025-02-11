@@ -30,15 +30,16 @@ function getAuthHeaders() {
     }
 }
 
-const BASE_URL = 'http://192.168.100.39:8082/api'; // Adjust the base URL as needed
+const BASE_URL = 'http://localhost:8082/api'; // Adjust the base URL as needed
 
 async function fetchOverviewData() {
     try {
-        const [employeesResponse, leavesResponse, tasksResponse, financesResponse] = await Promise.all([
+        const [employeesResponse, leavesResponse, tasksResponse, financesResponse, departmentStatsResponse] = await Promise.all([
             fetch(`${BASE_URL}/employees`, { headers: getAuthHeaders() }),
             fetch(`${BASE_URL}/leaves`, { headers: getAuthHeaders() }),
             fetch(`${BASE_URL}/tasks`, { headers: getAuthHeaders() }),
-            fetch(`${BASE_URL}/finances`, { headers: getAuthHeaders() })
+            fetch(`${BASE_URL}/finances`, { headers: getAuthHeaders() }),
+            fetch(`${BASE_URL}/employees/department-stats`, { headers: getAuthHeaders() }) // New endpoint for department stats
         ]);
 
         if (!employeesResponse.ok) {
@@ -53,24 +54,79 @@ async function fetchOverviewData() {
         if (!financesResponse.ok) {
             throw new Error('Failed to fetch finances');
         }
+        if (!departmentStatsResponse.ok) {
+            throw new Error('Failed to fetch department statistics');
+        }
 
         const employees = await employeesResponse.json();
         const leaves = await leavesResponse.json();
         const tasks = await tasksResponse.json();
         const finances = await financesResponse.json();
+        const departmentStats = await departmentStatsResponse.json(); // Get department stats
+
+        // Count leaves with status "Pending"
+        const pendingLeavesCount = leaves.filter(leave => leave.status === 'Pending').length;
+
+        // Count tasks with status "Not Started"
+        const notStartedTasksCount = tasks.filter(task => task.status === 'Not Started').length;
+
+        // Count finances with status "Pending"
+        const pendingFinancesCount = finances.filter(finance => finance.status === 'Pending').length;
 
         // Update the overview section
         document.getElementById('totalEmployees').innerText = employees.length;
-        document.getElementById('totalLeaves').innerText = leaves.length;
-        document.getElementById('totalTasks').innerText = tasks.length;
-        document.getElementById('totalFinanceRecords').innerText = finances.length;
+        document.getElementById('totalLeaves').innerText = pendingLeavesCount; // Update to show only pending leaves
+        document.getElementById('totalTasks').innerText = notStartedTasksCount; // Update to show only tasks not started
+        document.getElementById('totalFinanceRecords').innerText = pendingFinancesCount; // Update to show only pending finances
 
+        // Call function to render the pie chart
+        renderDepartmentChart(departmentStats);
     } catch (error) {
         console.error('Error fetching overview data:', error);
         alert('Error fetching overview data: ' + error.message);
     }
 }
 
+let departmentChart; // Declare a variable to hold the chart instance
+
+function renderDepartmentChart(departments) {
+    // Filter out departments with null or empty names
+    const filteredDepartments = departments.filter(department =>
+        department.departmentName && department.departmentName.trim() !== ''
+    );
+
+    const departmentNames = filteredDepartments.map(department => department.departmentName);
+    const departmentCounts = filteredDepartments.map(department => department.employeeCount);
+
+    Highcharts.chart('departmentChart', {
+        chart: {
+            type: 'pie',
+            options3d: {
+                enabled: true,
+                alpha: 10,
+                beta: 10,
+                depth: 50
+            }
+        },
+        title: {
+            text: 'Employee Distribution by Department'
+        },
+        plotOptions: {
+            pie: {
+                innerSize: 100,
+                depth: 45,
+                dataLabels: {
+                    enabled: true,
+                    format: '{point.name}: {point.y} ({point.percentage:.1f}%)'
+                }
+            }
+        },
+        series: [{
+            name: 'Employees',
+            data: departmentNames.map((name, index) => [name, departmentCounts[index]])
+        }]
+    });
+}
 function validateEmployeeData(employeeData) {
     const errors = [];
 
@@ -563,7 +619,7 @@ async function fetchAdminFinanceRecords() {
             recordsBody.appendChild(row);
         });
 
-        fetchOverviewData(); // Update the overview
+
     } catch (error) {
         console.error('Error:', error);
         alert('Error fetching finance records: ' + error.message);
@@ -1079,6 +1135,7 @@ function populateTaskDetails(taskId) {
         .catch(error => console.error('Error fetching task details:', error));
 }
 
+
 function populateUpdateForm(taskId) {
     fetch(`${BASE_URL}/tasks/${taskId}`, {
         method: 'GET',
@@ -1266,14 +1323,14 @@ function setMinDueDate() {
 window.onload = setMinDueDate;
 
 
-        //NOTIFICATIONS
+// NOTIFICATIONS
 let stompClient = null;
 let notificationCount = 0;
 let notifications = []; // Store notifications in an array
 
 function connectWebSocket() {
     const token = localStorage.getItem('jwt'); // Retrieve the JWT from local storage
-    const socket = new SockJS(`http://192.168.100.39:8082/notifications?token=${token}`); // Include token in the URL
+    const socket = new SockJS(`http://localhost:8082/notifications?token=${token}`); // Include token in the URL
     stompClient = Stomp.over(socket);
 
     stompClient.connect({}, function (frame) {
@@ -1287,17 +1344,25 @@ function connectWebSocket() {
     });
 }
 
-// Function to handle incoming notifications
 function handleNotification(notification) {
     console.log('New notification:', notification); // Debugging log
 
     // Check if notification has the expected structure
-    if (!notification.message) {
-        console.error('Notification does not have a message property:', notification);
+    if (!notification.message || !notification.timestamp) {
+        console.error('Notification does not have the required properties:', notification);
         return;
     }
+
+    // Check for duplicates
+    const exists = notifications.some(n => n.message === notification.message && n.timestamp === notification.timestamp);
+    if (exists) {
+        console.log('Duplicate notification, not adding:', notification);
+        return; // Exit if it's a duplicate
+    }
+
     // Add the notification to the notifications array with a read status
     notifications.push({ ...notification, read: false });
+    saveNotifications(); // Save notifications to localStorage
 
     // Display the notification
     displayNotifications();
@@ -1311,17 +1376,20 @@ function displayNotifications() {
     notifications.forEach((notification, index) => {
         const notificationItem = document.createElement('div');
         notificationItem.className = `alert alert-info ${notification.read ? 'read' : ''}`; // Add a class if read
-        notificationItem.innerText = notification.message; // Adjust based on your notification structure
+        notificationItem.innerText = `${notification.message} (Received at: ${new Date(notification.timestamp).toLocaleString()})`; // Display message and timestamp
 
-        // Add a button to mark this notification as read
-        const markAsReadButton = document.createElement('button');
-        markAsReadButton.className = 'btn btn-success btn-sm float-right';
-        markAsReadButton.innerText = 'Mark as Read';
-        markAsReadButton.onclick = function() {
-            markNotificationAsRead(index); // Mark this notification as read
-        };
+        // Only add the button if the notification is not read
+        if (!notification.read) {
+            const markAsReadButton = document.createElement('button');
+            markAsReadButton.className = 'btn btn-success btn-sm float-right';
+            markAsReadButton.innerText = 'Mark as Read';
+            markAsReadButton.onclick = function () {
+                markNotificationAsRead(index);  // Mark this notification as read
+            };
 
-        notificationItem.appendChild(markAsReadButton); // Append the button
+            notificationItem.appendChild(markAsReadButton); // Append the button
+        }
+
         notificationDisplayArea.appendChild(notificationItem); // Append the notification item
     });
 
@@ -1333,15 +1401,36 @@ function displayNotifications() {
 // Function to mark a specific notification as read
 function markNotificationAsRead(index) {
     notifications[index].read = true; // Set the read status to true
+    saveNotifications(); // Save notifications to localStorage
     displayNotifications(); // Refresh the display
+}
+
+// Function to save notifications to localStorage
+function saveNotifications() {
+    localStorage.setItem('notifications', JSON.stringify(notifications));
+}
+
+// Function to load notifications from localStorage
+function loadNotifications() {
+    const savedNotifications = localStorage.getItem('notifications');
+    if (savedNotifications) {
+        notifications = JSON.parse(savedNotifications);
+    }
 }
 
 // Mark all notifications as read
 document.getElementById('markAllAsRead').addEventListener('click', function () {
     notifications.forEach(notification => notification.read = true); // Mark all as read
+    saveNotifications(); // Save notifications to localStorage
     displayNotifications(); // Refresh the display
 });
 
+// Load notifications when the page is loaded
+window.onload = function() {
+    loadNotifications(); // Load notifications from localStorage
+    displayNotifications(); // Display loaded notifications
+    connectWebSocket(); // Connect to WebSocket
+};
 // Ensure elements exist before adding event listeners
 document.addEventListener('DOMContentLoaded', () => {
     // Call other functions

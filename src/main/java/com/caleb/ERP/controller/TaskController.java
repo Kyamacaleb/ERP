@@ -119,40 +119,4 @@ public class TaskController {
         List<Task> pendingTasks = taskService.getPendingTasksByCurrentEmployee(employeeId);
         return new ResponseEntity<>(pendingTasks, HttpStatus.OK);
     }
-    // Request an extension for a task
-    @PatchMapping("/{taskId}/request-extension")
-    @PreAuthorize("hasRole('EMPLOYEE')")
-    public ResponseEntity<Task> requestExtension(@PathVariable UUID taskId, @RequestBody Map<String, String> request) {
-        String reason = request.get("reason");
-        String newDueDate = request.get("newDueDate");
-
-        Task updatedTask = taskService.requestExtension(taskId, reason, newDueDate);
-        return ResponseEntity.ok(updatedTask);
-    }
-
-    // Approve an extension request
-    @PatchMapping("/{taskId}/approve-extension")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Task> approveExtension(@PathVariable UUID taskId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String adminEmail = authentication.getName();
-        Employee admin = employeeService.getEmployeeByEmail(adminEmail)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
-
-        Task updatedTask = taskService.approveExtension(taskId, admin);
-        return ResponseEntity.ok(updatedTask);
-    }
-
-    // Reject an extension request
-    @PatchMapping("/{taskId}/reject-extension")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Task> rejectExtension(@PathVariable UUID taskId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String adminEmail = authentication.getName();
-        Employee admin = employeeService.getEmployeeByEmail(adminEmail)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
-
-        Task updatedTask = taskService.rejectExtension(taskId, admin);
-        return ResponseEntity.ok(updatedTask);
-    }
 }

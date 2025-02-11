@@ -8,7 +8,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -38,12 +37,15 @@ public class TaskService {
         Task createdTask = taskRepository.save(task);
 
         // Send notification to the assigned employee
-        String employeeMessage = "A new task has been assigned to you: " + createdTask.getTaskName();
+        String employeeMessage = String.format("A new task has been assigned to you: %s (Due: %s, Assigned by: %s)",
+                createdTask.getTaskName(), createdTask.getDueDate(), createdTask.getAssignedBy().getFullName());
         notificationService.sendEmployeeNotification(employeeMessage);
 
         // Optionally, send notification to the admin
-        String adminMessage = "A new task has been created: " + createdTask.getTaskName();
+        String adminMessage = String.format("A new task has been created: %s (Due: %s, Assigned to: %s)",
+                createdTask.getTaskName(), createdTask.getDueDate(), createdTask.getAssignedTo().getFullName());
         notificationService.sendAdminNotification(adminMessage);
+
 
         return createdTask;
     }
@@ -66,12 +68,15 @@ public class TaskService {
         Task updatedTask = taskRepository.save(task);
 
         // Send notification to the assigned employee
-        String employeeMessage = "Your task has been updated: " + updatedTask.getTaskName();
+        String employeeMessage = String.format("Your task has been updated: %s (Due: %s, Assigned by: %s)",
+                updatedTask.getTaskName(), updatedTask.getDueDate(), updatedTask.getAssignedBy().getFullName());
         notificationService.sendEmployeeNotification(employeeMessage);
 
         // Optionally, send notification to the admin
-        String adminMessage = "Task updated: " + updatedTask.getTaskName();
+        String adminMessage = String.format("Task updated: %s (Due: %s, Assigned to: %s)",
+                updatedTask.getTaskName(), updatedTask.getDueDate(), updatedTask.getAssignedTo().getFullName());
         notificationService.sendAdminNotification(adminMessage);
+
 
         return updatedTask;
     }
@@ -132,61 +137,4 @@ public class TaskService {
     public boolean isValidTaskName(String taskName) {
         return taskName != null && taskName.matches("[a-zA-Z0-9\\s\\p{Punct}]+");
     }
-    public Task requestExtension(UUID taskId, String reason, String newDueDate) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new NoSuchElementException("Task not found"));
-
-        if (!task.getStatus().equals("in-progress")) {
-            throw new RuntimeException("Extension can only be requested for tasks in progress.");
-        }
-
-        LocalDate currentDueDate = LocalDate.parse(task.getDueDate());
-        LocalDate proposedNewDueDate = LocalDate.parse(newDueDate);
-
-        // Validate that the new due date is in the future and after the current due date
-        if (!proposedNewDueDate.isAfter(currentDueDate)) {
-            throw new RuntimeException("The new due date must be in the future and later than the current due date.");
-        }
-
-        task.setExtensionRequested(true);
-        task.setExtensionReason(reason);
-        task.setNewDueDate(newDueDate);
-        task.setRequestTimestamp(LocalDateTime.now());
-
-        return taskRepository.save(task);
-    }
-
-    public Task approveExtension(UUID taskId, Employee admin) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new NoSuchElementException("Task not found"));
-
-        if (!task.isExtensionRequested()) {
-            throw new RuntimeException("No extension request found for this task.");
-        }
-
-        task.setApprovalStatus("Approved");
-        task.setApprovalTimestamp(LocalDateTime.now());
-        task.setDueDate(task.getNewDueDate()); // Update the due date to the new one
-        task.setExtensionRequested(false); // Reset the extension request flag
-        task.setApprovedBy(admin); // Set the admin who approved the request
-
-        return taskRepository.save(task);
-    }
-
-    public Task rejectExtension(UUID taskId, Employee admin) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new NoSuchElementException("Task not found"));
-
-        if (!task.isExtensionRequested()) {
-            throw new RuntimeException("No extension request found for this task.");
-        }
-
-        task.setApprovalStatus("Rejected");
-        task.setApprovalTimestamp(LocalDateTime.now());
-        task.setExtensionRequested(false); // Reset the extension request flag
-        task.setApprovedBy(admin); // Set the admin who rejected the request
-
-        return taskRepository.save(task);
-    }
-
 }

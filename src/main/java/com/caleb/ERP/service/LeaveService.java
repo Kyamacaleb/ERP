@@ -83,6 +83,11 @@ public class LeaveService {
         String employeeMessage = "Your leave request has been submitted and is pending approval.";
         notificationService.sendEmployeeNotification(employeeMessage);
 
+        // Send notification to admin
+        String adminMessage = String.format("A new leave request has been submitted by %s for %d days (Leave Type: %s).",
+                employee.getFullName(), daysBetween, leaveRequest.getLeaveType());
+        notificationService.sendAdminNotification(adminMessage);
+
         return savedLeave;
     }
 

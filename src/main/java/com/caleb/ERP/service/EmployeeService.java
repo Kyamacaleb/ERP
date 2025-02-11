@@ -1,5 +1,6 @@
 package com.caleb.ERP.service;
 
+import com.caleb.ERP.dto.DepartmentStatistics;
 import com.caleb.ERP.entity.Contact;
 import com.caleb.ERP.entity.Employee;
 import com.caleb.ERP.repository.EmployeeRepository;
@@ -127,7 +128,8 @@ public class EmployeeService implements UserDetailsService {
         }
 
         // Send notification to admins
-        String adminMessage = "A new employee has been created: " + savedEmployee.getFullName();
+        String adminMessage = String.format("A new employee has been successfully created: %s (Email: %s, Role: %s). Please welcome them to the team!",
+                savedEmployee.getFullName(), savedEmployee.getEmail(), savedEmployee.getRole());
         notificationService.sendAdminNotification(adminMessage);
 
         return savedEmployee;
@@ -183,8 +185,14 @@ public class EmployeeService implements UserDetailsService {
         Employee updatedEmployee = employeeRepository.save(employee);
 
         // Send notification to admins
-        String adminMessage = "Employee details updated: " + updatedEmployee.getFullName();
+        String adminMessage = String.format("Employee details have been updated: %s (Email: %s). Please review the changes.",
+                updatedEmployee.getFullName(), updatedEmployee.getEmail());
         notificationService.sendAdminNotification(adminMessage);
+
+// Send notification to the employee
+        String employeeMessage = String.format("Your details have been updated successfully, %s. If you notice any discrepancies, please contact HR.",
+                updatedEmployee.getFullName());
+        notificationService.sendEmployeeNotification(employeeMessage);
 
         return updatedEmployee;
     }
@@ -245,7 +253,8 @@ public class EmployeeService implements UserDetailsService {
         contactService.deactivateContactForEmployee(employee); // Deactivate the associated contact
 
         // Send notification to admins
-        String adminMessage = "Employee has been deactivated: " + employee.getFullName();
+        String adminMessage = String.format("Employee has been deactivated: %s (Email: %s). Please ensure all necessary actions are taken.",
+                employee.getFullName(), employee.getEmail());
         notificationService.sendAdminNotification(adminMessage);
     }
 
@@ -288,9 +297,15 @@ public class EmployeeService implements UserDetailsService {
         // Save the updated employee
         employeeRepository.save(employee);
 
-        // Optionally, send a notification to the employee about the password reset
-        String adminMessage = "The password for employee " + employee.getFullName() + " has been reset.";
+        // Send notification to admins
+        String adminMessage = String.format("The password for employee %s has been reset. Please ensure they are informed of the new password.",
+                employee.getFullName());
         notificationService.sendAdminNotification(adminMessage);
+
+// Send notification to the employee
+        String employeeMessage = String.format("Hello %s, your password has been reset. Please check your email for instructions on how to set a new password.",
+                employee.getFullName());
+        notificationService.sendEmployeeNotification(employeeMessage);
     }
 
     public void changePassword(UUID employeeId, String currentPassword, String newPassword) {
@@ -311,12 +326,16 @@ public class EmployeeService implements UserDetailsService {
         employee.setPassword(passwordEncoder.encode(newPassword));
         employeeRepository.save(employee);
 
-        // Optionally, send a notification about the password change
-        String adminMessage = "The password for employee " + employee.getFullName() + " has been changed.";
-        notificationService.sendAdminNotification(adminMessage);
+        // Send notification to the employee
+        String employeeMessage = String.format("Hi %s, your password has been changed successfully. If you did not make this change, please contact support immediately.",
+                employee.getFullName());
+        notificationService.sendEmployeeNotification(employeeMessage);
     }
 
     public Employee saveEmployee(Employee employee) {
         return employeeRepository.save(employee);
+    }
+    public List<DepartmentStatistics> getEmployeeCountByDepartment() {
+        return employeeRepository.countEmployeesByDepartment();
     }
 }

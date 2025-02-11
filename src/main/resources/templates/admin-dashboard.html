@@ -8,8 +8,11 @@
     <link rel="stylesheet" href="/css/admin.css"> <!-- Link to the external CSS file -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+    <script src="https://code.highcharts.com/highcharts-3d.js"></script>
 
-</head>
 <body>
 
 <!-- Sidebar -->
@@ -17,25 +20,39 @@
     <h2 class="text-white text-center">Admin Panel</h2>
     <ul class="nav flex-column">
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('overview')">Overview</a>
+            <a class="nav-link" href="#" onclick="showSection('overview')">
+                <i class="fas fa-tachometer-alt"></i> Overview
+            </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('employeeManagement')">Employee Management</a>
+            <a class="nav-link" href="#" onclick="showSection('employeeManagement')">
+                <i class="fas fa-users"></i> Employee Management
+            </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('financeManagement')">Finance Management</a>
+            <a class="nav-link" href="#" onclick="showSection('financeManagement')">
+                <i class="fas fa-money-bill-wave"></i> Finance Management
+            </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('leaveManagement')">Leave Management</a>
+            <a class="nav-link" href="#" onclick="showSection('leaveManagement')">
+                <i class="fas fa-calendar-alt"></i> Leave Management
+            </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('taskManagement')">Task Management</a>
+            <a class="nav-link" href="#" onclick="showSection('taskManagement')">
+                <i class="fas fa-tasks"></i> Task Management
+            </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('contactManagement')">Contact Management</a>
+            <a class="nav-link" href="#" onclick="showSection('contactManagement')">
+                <i class="fas fa-address-book"></i> Contact Management
+            </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('notificationManagement')">Notifications</a>
+            <a class="nav-link" href="#" onclick="showSection('notificationManagement')">
+                <i class="fas fa-bell"></i> Notifications
+            </a>
         </li>
         <li class="nav-item mt-auto">
             <button class="btn btn-outline-secondary w-100" id="toggleDarkMode">
@@ -47,7 +64,6 @@
         </li>
     </ul>
 </div>
-
 <!-- Top Bar -->
 <nav class="navbar navbar-expand-lg navbar-light fixed-top">
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -107,6 +123,7 @@
                         </a>
                     </div>
                 </div>
+                <div id="departmentChart" style="width: 100%; height: 400px;"></div>
             </div>
         </div>
     </div>

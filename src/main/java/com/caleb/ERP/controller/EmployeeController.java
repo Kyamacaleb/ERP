@@ -1,5 +1,6 @@
 package com.caleb.ERP.controller;
 
+import com.caleb.ERP.dto.DepartmentStatistics;
 import com.caleb.ERP.entity.Employee;
 import com.caleb.ERP.service.EmployeeService;
 import com.caleb.ERP.service.JwtTokenService;
@@ -305,6 +306,11 @@ public class EmployeeController {
             return ResponseEntity.notFound().build();
         }
     }
-
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/department-stats")
+    public ResponseEntity<List<DepartmentStatistics>> getEmployeeCountByDepartment() {
+        List<DepartmentStatistics> stats = employeeService.getEmployeeCountByDepartment();
+        return ResponseEntity.ok(stats);
+    }
 
 }
