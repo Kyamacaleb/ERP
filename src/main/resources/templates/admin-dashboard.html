@@ -12,58 +12,65 @@
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
 
 <body>
 
 <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <button class="btn btn-link text-white" id="sidebarToggle">
+            <i class="fas fa-bars"></i> <!-- Hamburger Menu -->
+        </button>
+    </div>
     <h2 class="text-white text-center">Admin Panel</h2>
     <ul class="nav flex-column">
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('overview')">
-                <i class="fas fa-tachometer-alt"></i> Overview
+            <a class="nav-link d-flex flex-column align-items-center" href="#" onclick="showSection('overview')">
+                <i class="fas fa-tachometer-alt"></i> <span>Overview</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('employeeManagement')">
-                <i class="fas fa-users"></i> Employee Management
+            <a class="nav-link d-flex flex-column align-items-center" href="#" onclick="showSection('employeeManagement')">
+                <i class="fas fa-users"></i> <span>Employees</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('financeManagement')">
-                <i class="fas fa-money-bill-wave"></i> Finance Management
+            <a class="nav-link d-flex flex-column align-items-center" href="#" onclick="showSection('financeManagement')">
+                <i class="fas fa-money-bill-wave"></i> <span>Finance</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('leaveManagement')">
-                <i class="fas fa-calendar-alt"></i> Leave Management
+            <a class="nav-link d-flex flex-column align-items-center" href="#" onclick="showSection('leaveManagement')">
+                <i class="fas fa-calendar-alt"></i> <span>Leave</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('taskManagement')">
-                <i class="fas fa-tasks"></i> Task Management
+            <a class="nav-link d-flex flex-column align-items-center" href="#" onclick="showSection('taskManagement')">
+                <i class="fas fa-tasks"></i> <span>Tasks</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('contactManagement')">
-                <i class="fas fa-address-book"></i> Contact Management
+            <a class="nav-link d-flex flex-column align-items-center" href="#" onclick="showSection('contactManagement')">
+                <i class="fas fa-address-book"></i> <span>Contacts</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showSection('notificationManagement')">
-                <i class="fas fa-bell"></i> Notifications
+            <a class="nav-link d-flex flex-column align-items-center" href="#" onclick="showSection('notificationManagement')">
+                <i class="fas fa-bell"></i> <span>Alerts</span>
             </a>
         </li>
         <li class="nav-item mt-auto">
-            <button class="btn btn-outline-secondary w-100" id="toggleDarkMode">
-                <i class="fas fa-moon"></i> Toggle Dark Mode
+            <button class="btn btn-outline-secondary w-100 small-btn" id="toggleDarkMode">
+                <i class="fas fa-moon"></i> <span>Dark Mode</span>
             </button>
-            <button class="btn btn-danger w-100" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i> Logout
+            <button class="btn btn-danger w-100 small-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
             </button>
         </li>
     </ul>
 </div>
+
 <!-- Top Bar -->
 <nav class="navbar navbar-expand-lg navbar-light fixed-top">
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,50 +88,83 @@
 
 <!-- Main Content -->
 <div class="content" id="content">
-    <div class="card" id="overview">
-        <div class="card-header">
-            <h5>Overview</h5>
-        </div>
-        <div class="card-body">
-            <div class="row text-center">
-                <div class="col-md-3">
-                    <div class="border-primary p-3">
-                        <i class="fas fa-users fa-3x text-primary"></i>
-                        <h6 class="card-title">Total Employees</h6>
-                        <a href="#" onclick="showSection('employeeManagement')">
-                            <h2 id="totalEmployees">0</h2>
-                        </a>
+    <div id="overview" class="hidden">
+        <div class="container-fluid"> <!-- Use container-fluid for full width -->
+            <div class="row">
+            <!-- Total Employees Card -->
+            <div class="col-md-3 mb-3"> <!-- Adjust the column size as needed -->
+                <div class="card total-employees-card"> <!-- Specific class -->
+                    <div class="card-body text-center">
+                        <div class="border-primary p-3">
+                            <i class="fas fa-users fa-3x text-primary"></i>
+                            <h6 class="card-title">Total Employees</h6>
+                            <a href="#" onclick="showSection('employeeManagement')">
+                                <h2 id="totalEmployees">0</h2>
+                            </a>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="border-success p-3">
-                        <i class="fas fa-calendar-alt fa-3x text-success"></i>
-                        <h6 class="card-title">Total Leaves</h6>
-                        <a href="#" onclick="showSection('leaveManagement')">
-                            <h2 id="totalLeaves">0</h2>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="border-warning p-3">
-                        <i class="fas fa-tasks fa-3x text-warning"></i>
-                        <h6 class="card-title">Total Tasks</h6>
-                        <a href="#" onclick="showSection('taskManagement')">
-                            <h2 id="totalTasks">0</h2>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="border-danger p-3">
-                        <i class="fas fa-money-bill-wave fa-3x text-danger"></i>
-                        <h6 class="card-title">Total Finance Records</h6>
-                        <a href="#" onclick="showSection('financeManagement')">
-                            <h2 id="totalFinanceRecords">0</h2>
-                        </a>
-                    </div>
-                </div>
-                <div id="departmentChart" style="width: 100%; height: 400px;"></div>
             </div>
+            <!-- Total Leaves Card -->
+            <div class="col-md-3 mb-3">
+                <div class="card total-leaves-card"> <!-- Specific class -->
+                    <div class="card-body text-center">
+                        <div class="border-success p-3">
+                            <i class="fas fa-calendar-alt fa-3x text-success"></i>
+                            <h6 class="card-title">Total Leaves</h6>
+                            <a href="#" onclick="showSection('leaveManagement')">
+                                <h2 id="totalLeaves">0</h2>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Total Tasks Card -->
+            <div class="col-md-3 mb-3">
+                <div class="card total-tasks-card"> <!-- Specific class -->
+                    <div class="card-body text-center">
+                        <div class="border-warning p-3">
+                            <i class="fas fa-tasks fa-3x text-warning"></i>
+                            <h6 class="card-title">Total Tasks</h6>
+                            <a href="#" onclick="showSection('taskManagement')">
+                                <h2 id="totalTasks">0</h2>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Total Finance Records Card -->
+            <div class="col-md-3 mb-3">
+                <div class="card total-finance-card"> <!-- Specific class -->
+                    <div class="card-body text-center">
+                        <div class="border-danger p-3">
+                            <i class="fas fa-money-bill-wave fa-3x text-danger"></i>
+                            <h6 class="card-title">Total Finance Records</h6>
+                            <a href="#" onclick="showSection('financeManagement')">
+                                <h2 id="totalFinanceRecords">0</h2>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Chart -->
+        <div class="row">
+            <div class="col-md-6"> <!-- Half width for the chart -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div id="departmentChart" style="width: 100%; height: 400px;"></div>
+                    </div>
+                </div>
+            </div><div class="col-md-6"> <!-- Half width for another element -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <!-- Add another element here (e.g., a table or chart) -->
+                </div>
+            </div>
+        </div>
+        </div>
         </div>
     </div>
 
@@ -133,6 +173,7 @@
         <div class="card-header">
             <h5>Employee Management</h5>
             <button class="btn btn-secondary float-right" onclick="showCreateEmployeeForm()">Add Employee</button>
+            <button class="btn btn-warning float-right mr-2" onclick="showResetPasswordForm()">Reset Password</button>
         </div>
         <div class="card-body">
             <div id="createEmployeeFormContainer" class="hidden">
@@ -234,29 +275,31 @@
 
             <hr>
 
-            <h6>Reset Employee Password</h6>
-            <form id="resetPasswordForm">
-                <div class="form-group">
-                    <label for="resetEmployeeEmail">Employee Email</label>
-                    <input type="email" class="form-control" id="resetEmployeeEmail" required placeholder="Enter Employee Email">
-                    <div class="text-danger" id="resetEmployeeEmailError"></div> <!-- Error message container -->
-                </div>
-                <div class="form-group">
-                    <label for="newPassword">New Password</label>
-                    <div class="input-group">
-                        <input type="password" class="form-control" id="newPassword" required
-                               pattern="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$"
-                               title="Password must be at least 8 characters long, include at least one uppercase letter, one lowercase letter, one digit, and one special character.">
-                        <div class="input-group-append">
-                            <button class="btn btn-outline-secondary" type="button" id="toggleNewPassword" onclick="togglePasswordVisibility('newPassword', 'eyeIconNewPassword')">
-                                <i class="fa fa-eye" id="eyeIconNewPassword"></i> <!-- Font Awesome eye icon -->
-                            </button>
-                        </div>
+            <div id="resetPasswordFormContainer" class="hidden">
+                <h6>Reset Employee Password</h6>
+                <form id="resetPasswordForm">
+                    <div class="form-group">
+                        <label for="resetEmployeeEmail">Employee Email</label>
+                        <input type="email" class="form-control" id="resetEmployeeEmail" required placeholder="Enter Employee Email">
+                        <div class="text-danger" id="resetEmployeeEmailError"></div> <!-- Error message container -->
                     </div>
-                    <div class="text-danger" id="newPasswordError"></div> <!-- Error message container -->
-                </div>
-                <button type="button" class="btn btn-warning" onclick="resetEmployeePassword()">Reset Password</button>
-            </form>
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="newPassword" required
+                                   pattern="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$"
+                                   title="Password must be at least 8 characters long, include at least one uppercase letter, one lowercase letter, one digit, and one special character.">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" id="toggleNewPassword" onclick="togglePasswordVisibility('newPassword', 'eyeIconNewPassword')">
+                                    <i class="fa fa-eye" id="eyeIconNewPassword"></i> <!-- Font Awesome eye icon -->
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-danger" id="newPasswordError"></div> <!-- Error message container -->
+                    </div>
+                    <button type="button" class="btn btn-warning" onclick="resetEmployeePassword()">Reset Password</button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -316,18 +359,31 @@
         </div>
     </div>
 
-    <div class="card hidden" id="financeManagement">
+    <div class="card" id="financeManagement">
         <div class="card-header">
             <h5>Admin Finance Management</h5>
         </div>
         <div class="card-body">
-            <!-- Fetch All Finances -->
-            <section class="finance-section">
+            <!-- Navigation Buttons -->
+            <div class="mb-4">
+                <button class="btn btn-primary me-3" onclick="showFinanceSection('financeList')">
+                    <i class="fas fa-file-invoice-dollar"></i> Finance Records
+                </button>
+                <button class="btn btn-warning me-3" onclick="showFinanceSection('deletedFinanceList')">
+                    <i class="fas fa-trash"></i> Deleted Records
+                </button>
+                <button class="btn btn-info" onclick="showFinanceSection('financeHistoryList')">
+                    <i class="fas fa-history"></i> Finance History
+                </button>
+            </div>
+
+            <!-- Finance Records Section (Default) -->
+            <section id="financeList" class="finance-section">
                 <h6>Finance Records</h6>
                 <button class="btn btn-primary mb-3" onclick="fetchAdminFinanceRecords()">
                     <i class="fas fa-sync"></i> Fetch All Finances
                 </button>
-                <div id="financeList" class="mt-3">
+                <div class="mt-3">
                     <table class="table table-striped table-hover">
                         <thead>
                         <tr>
@@ -346,13 +402,13 @@
                 </div>
             </section>
 
-            <!-- Deleted Finance Records Section -->
-            <section class="finance-section">
+            <!-- Deleted Finance Records Section (Hidden) -->
+            <section id="deletedFinanceList" class="finance-section" style="display: none;">
                 <h6>Deleted Finance Records</h6>
                 <button class="btn btn-warning mb-3" onclick="fetchDeletedFinanceRecords()">
                     <i class="fas fa-trash-restore"></i> Fetch Deleted Finances
                 </button>
-                <div id="deletedFinanceList" class="mt-3">
+                <div class="mt-3">
                     <table class="table table-striped table-hover">
                         <thead>
                         <tr>
@@ -371,13 +427,13 @@
                 </div>
             </section>
 
-            <!-- Finance History Section -->
-            <section class="finance-section">
+            <!-- Finance History Section (Hidden) -->
+            <section id="financeHistoryList" class="finance-section" style="display: none;">
                 <h6>Finance History</h6>
                 <button class="btn btn-info mb-3" onclick="fetchFinanceHistory()">
                     <i class="fas fa-history"></i> Fetch Finance History
                 </button>
-                <div id="financeHistoryList" class="mt-3">
+                <div class="mt-3">
                     <table class="table table-striped table-hover">
                         <thead>
                         <tr>
@@ -398,57 +454,70 @@
         </div>
     </div>
 
-    <div class="card hidden" id="leaveManagement">
+    <div class="card" id="leaveManagement">
         <div class="card-header">
             <h5>Admin Leave Management</h5>
         </div>
         <div class="card-body">
-            <!-- Fetch Leave Requests -->
-            <h6>Leave Requests</h6>
-            <button class="btn btn-secondary mb-3" onclick="fetchLeaveRequests()">
-                <i class="fas fa-sync-alt"></i> Fetch Leave Requests
-            </button>
-            <div id="leaveList" class="mt-3 table-responsive">
-                <table class="table table-bordered table-striped" aria-label="Leave Requests List">
-                    <thead>
-                    <tr>
-                        <th>Employee Name</th>
-                        <th>Leave Type</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody id="leaveTableBody">
-                    <!-- Leave rows will be dynamically populated -->
-                    </tbody>
-                </table>
+            <!-- Navigation Buttons -->
+            <div class="mb-3">
+                <button class="btn btn-primary me-4" onclick="showLeaveSection('leaveRequests')">
+                    <i class="fas fa-list"></i> Leave Requests
+                </button>
+                <button class="btn btn-info" onclick="showLeaveSection('leaveHistory')">
+                    <i class="fas fa-history"></i> Leave History
+                </button>
             </div>
-            <hr>
 
-            <!-- Leave History -->
-            <h6>Leave History</h6>
-            <button class="btn btn-secondary mb-3" onclick="fetchLeaveHistory()">
-                <i class="fas fa-history"></i> Fetch Leave History
-            </button>
-            <div id="leaveHistoryList" class="mt-3 table-responsive">
-                <table class="table table-bordered table-striped" aria-label="Leave History">
-                    <thead>
-                    <tr>
-                        <th>Employee Name</th>
-                        <th>Leave Type</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                        <th>Status</th>
-                        <th>Processed On</th>
-                    </tr>
-                    </thead>
-                    <tbody id="leaveHistoryTableBody">
-                    <!-- Approved/Rejected rows will be dynamically populated -->
-                    </tbody>
-                </table>
-            </div>
+            <!-- Leave Requests Section (Default) -->
+            <section id="leaveRequests" class="leave-section">
+                <h6>Leave Requests</h6>
+                <button class="btn btn-secondary mb-3" onclick="fetchLeaveRequests()">
+                    <i class="fas fa-sync-alt"></i> Fetch Leave Requests
+                </button>
+                <div class="mt-3 table-responsive">
+                    <table class="table table-bordered table-striped" aria-label="Leave Requests List">
+                        <thead>
+                        <tr>
+                            <th>Employee Name</th>
+                            <th>Leave Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="leaveTableBody">
+                        <!-- Leave rows will be dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Leave History Section (Hidden) -->
+            <section id="leaveHistory" class="leave-section" style="display: none;">
+                <h6>Leave History</h6>
+                <button class="btn btn-secondary mb-3" onclick="fetchLeaveHistory()">
+                    <i class="fas fa-history"></i> Fetch Leave History
+                </button>
+                <div class="mt-3 table-responsive">
+                    <table class="table table-bordered table-striped" aria-label="Leave History">
+                        <thead>
+                        <tr>
+                            <th>Employee Name</th>
+                            <th>Leave Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Processed On</th>
+                        </tr>
+                        </thead>
+                        <tbody id="leaveHistoryTableBody">
+                        <!-- Approved/Rejected rows will be dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
     </div>
 
@@ -591,23 +660,31 @@
     // Function to show the selected section
     function showSection(sectionId) {
         // Hide all sections
-        const sections = document.querySelectorAll('.content .card');
+        const sections = document.querySelectorAll('.content > div'); // Select all direct child divs of .content
         sections.forEach(section => {
-            section.classList.add('hidden');
+            section.classList.add('hidden'); // Add the hidden class to each section
         });
 
         // Show the selected section
-        const activeSection = document.getElementById(sectionId);
+        const activeSection = document.getElementById(sectionId); // Get the section to be shown by ID
         if (activeSection) {
-            activeSection.classList.remove('hidden');
-            document.getElementById('activeSection').innerText = activeSection.querySelector('.card-header h5').innerText;
+            activeSection.classList.remove('hidden'); // Remove the hidden class to display the section
 
+            /* Update the active section text in the navbar
+            const header = activeSection.querySelector('.card-header h5'); // Get the header of the active section
+            document.getElementById('activeSection').innerText = header ? header.innerText : "Overview"; // Set the active section text
+*/
             // Fetch overview data if the Overview section is shown
             if (sectionId === 'overview') {
-                fetchOverviewData(); // Fetch and display overview data
+                fetchOverviewData(); // Call the function to fetch and display overview data
             }
         }
     }
+
+    // Show the overview section by default
+    document.addEventListener('DOMContentLoaded', function() {
+        showSection('overview'); // Call this function to display the Overview section by default
+    });
 
     function togglePasswordVisibility(passwordFieldId, toggleButtonId) {
         const passwordField = document.getElementById(passwordFieldId);
@@ -625,6 +702,23 @@
             eyeIcon.classList.add('fa-eye');
         }
 
+    }
+    function showFinanceSection(sectionId) {
+        // Hide all finance sections
+        document.getElementById('financeList').style.display = 'none';
+        document.getElementById('deletedFinanceList').style.display = 'none';
+        document.getElementById('financeHistoryList').style.display = 'none';
+
+        // Show the selected section
+        document.getElementById(sectionId).style.display = 'block';
+    }
+    function showLeaveSection(sectionId) {
+        // Hide all leave sections
+        document.getElementById('leaveRequests').style.display = 'none';
+        document.getElementById('leaveHistory').style.display = 'none';
+
+        // Show the selected section
+        document.getElementById(sectionId).style.display = 'block';
     }
     // Function to toggle dark mode
     document.getElementById('toggleDarkMode').addEventListener('click', function() {

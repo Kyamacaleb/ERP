@@ -338,4 +338,8 @@ public class EmployeeService implements UserDetailsService {
     public List<DepartmentStatistics> getEmployeeCountByDepartment() {
         return employeeRepository.countEmployeesByDepartment();
     }
+
+    public long getTotalEmployeeCount() {
+        return employeeRepository.count(); // Get total count of employees
+    }
 }

@@ -36,7 +36,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/employees/login", "/error").permitAll() // Allow access to login endpoint
                 .requestMatchers("/uploads/**").permitAll() // Allow public access to uploaded files
                 .requestMatchers("/websocket/**").permitAll() // Allow access to WebSocket endpoint
-                .requestMatchers("/favicon.ico", "/error", "/uploads/**", "/css/**", "/js/**", "/").permitAll() // Public resources
+                .requestMatchers("/favicon.ico", "/images/**", "/error", "/uploads/**", "/css/**", "/js/**", "/").permitAll() // Public resources
                 .requestMatchers("/api/employees/me").authenticated() // Ensure this endpoint is authenticated
                 .requestMatchers("/api/employees/**").hasAnyRole("ADMIN", "EMPLOYEE")
                 .requestMatchers("/api/contacts/**").hasAnyRole("ADMIN", "EMPLOYEE")

@@ -50,15 +50,37 @@
 
 <div class="d-flex">
     <div class="sidebar p-3">
-        <a href="#" class="d-block mb-2" onclick="showSection('overview')"><i class="fas fa-tachometer-alt"></i> Overview</a>
-        <a href="#" class="d-block mb-2" onclick="showSection('personalInfo')"><i class="fas fa-user"></i> Personal Information</a>
-        <a href="#" class="d-block mb-2" onclick="showSection('leaveManagement')"><i class="fas fa-calendar-alt"></i> Leave Management</a>
-        <a href="#" class="d-block mb-2" onclick="showSection('taskManagement')"><i class="fas fa-tasks"></i> Task Management</a>
-        <a href="#" class="d-block mb-2" onclick="showSection('financeManagement')"><i class="fas fa-money-bill-wave"></i> Finance Management</a>
-        <a href="#" class="d-block mb-2" onclick="showSection('contactDirectory')"><i class="fas fa-address-book"></i> Contact Directory</a>
-        <a href="#" class="d-block mb-2" onclick="showSection('notificationManagement')"></a>
-        <button class="btn btn-secondary mt-3" id="toggleDarkMode">Dark Mode</button>
-        <a href="#" class="btn btn-danger logout mt-3" id="sidebarLogoutButton"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        <!-- Hamburger Icon -->
+        <button class="btn btn-light mb-3" id="hamburgerButton" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Sidebar Links -->
+        <a href="#" class="d-block mb-2 text-center" onclick="showSection('overview')">
+            <i class="fas fa-tachometer-alt fa-2x"></i><br> Overview
+        </a>
+        <a href="#" class="d-block mb-2 text-center" onclick="showSection('personalInfo')">
+            <i class="fas fa-user fa-2x"></i><br> Personal
+        </a>
+        <a href="#" class="d-block mb-2 text-center" onclick="showSection('leaveManagement')">
+            <i class="fas fa-calendar-alt fa-2x"></i><br> Leave
+        </a>
+        <a href="#" class="d-block mb-2 text-center" onclick="showSection('taskManagement')">
+            <i class="fas fa-tasks fa-2x"></i><br> Task
+        </a>
+        <a href="#" class="d-block mb-2 text-center" onclick="showSection('financeManagement')">
+            <i class="fas fa-money-bill-wave fa-2x"></i><br> Finance
+        </a>
+        <a href="#" class="d-block mb-2 text-center" onclick="showSection('contactDirectory')">
+            <i class="fas fa-address-book fa-2x"></i><br> Contact
+        </a>
+        <a href="#" class="d-block mb-2 text-center" onclick="showSection('notificationManagement')">
+            <i class="fas fa-bell fa-2x"></i><br> Alerts
+        </a>
+
+        <button class="btn btn-secondary mt-3" id="toggleDarkMode" onclick="toggleDarkMode()">
+            <i id="darkModeIcon" class="fas fa-sun"></i> <!-- Default icon for light mode -->
+        </button>
     </div>
 </div>
 <!-- Main Content -->
@@ -727,7 +749,12 @@
             console.error(`Section with ID "${sectionId}" not found.`);
         }
     }
-
+    function toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        sidebar.classList.toggle('collapsed'); // Add a class to collapse/expand
+        const content = document.querySelector('.content');
+        content.classList.toggle('collapsed'); // Adjust content margin when sidebar is collapsed
+    }
     document.addEventListener('DOMContentLoaded', () => {
         showSection('overview'); // Show the overview section by default
 

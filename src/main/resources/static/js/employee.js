@@ -1,5 +1,5 @@
 // Base URL for API requests
-const BASE_URL = 'http://localhost:8082'; // Adjust this to your actual backend URL
+const BASE_URL = 'http://192.168.100.39:8082'; // Adjust this to your actual backend URL
 
 // Function to fetch and display all overview counts
 async function fetchOverviewCounts() {
@@ -165,7 +165,17 @@ if (logoutButton) {
 } else {
     console.error('Logout button not found in the DOM');
 }
-
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const icon = document.getElementById('darkModeIcon');
+    if (document.body.classList.contains('dark-mode')) {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon'); // Change to moon icon
+    } else {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun'); // Change back to sun icon
+    }
+}
 // Utility function to get authentication headers
 function getAuthHeaders(isMultipart = false) {
     const token = localStorage.getItem('jwt');
@@ -1166,7 +1176,7 @@ let notifications = []; // Store notifications in an array
 
 function connectWebSocket() {
     const token = localStorage.getItem('jwt'); // Retrieve the JWT from local storage
-    const socket = new SockJS(`http://localhost:8082/notifications?token=${token}`); // Include token in the URL
+    const socket = new SockJS(`http://192.168.100.39:8082/notifications?token=${token}`); // Include token in the URL
     stompClient = Stomp.over(socket);
 
     stompClient.connect({}, function (frame) {

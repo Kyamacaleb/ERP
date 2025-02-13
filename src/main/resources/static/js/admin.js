@@ -29,8 +29,31 @@ function getAuthHeaders() {
         return {};
     }
 }
+document.getElementById('sidebarToggle').addEventListener('click', function () {
+    const sidebar = document.getElementById('sidebar');
+    const content = document.querySelector('.content');
 
-const BASE_URL = 'http://localhost:8082/api'; // Adjust the base URL as needed
+    sidebar.classList.toggle('collapsed');
+    content.classList.toggle('collapsed');
+
+    // Save state to localStorage
+    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+});
+
+// On page load, check localStorage for sidebar state
+window.addEventListener('load', function () {
+    const sidebar = document.getElementById('sidebar');
+    const content = document.querySelector('.content');
+
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+        sidebar.classList.add('collapsed');
+        content.classList.add('collapsed');
+    }
+});
+$(document).ready(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+});
+const BASE_URL = 'http://192.168.100.39:8082/api'; // Adjust the base URL as needed
 
 async function fetchOverviewData() {
     try {
@@ -463,6 +486,26 @@ async function updateEmployee() {
         alert('Error updating employee: ' + error.message);
     }
 }
+function showResetPasswordForm() {
+    const resetPasswordFormContainer = document.getElementById('resetPasswordFormContainer');
+
+    // Toggle visibility of the reset password form
+    if (resetPasswordFormContainer.classList.contains('hidden')) {
+        resetPasswordFormContainer.classList.remove('hidden'); // Show the form
+    } else {
+        resetPasswordFormContainer.classList.add('hidden'); // Hide the form
+    }
+
+    // Reset the form fields when showing the form
+    resetPasswordForm(); // Call the reset function to clear any previous errors
+}
+
+// Function to reset the reset password form
+function resetPasswordForm() {
+    document.getElementById('resetPasswordForm').reset(); // Reset the form fields
+    document.getElementById('resetEmployeeEmailError').innerText = ''; // Clear previous error messages
+    document.getElementById('newPasswordError').innerText = ''; // Clear previous error messages
+}
 // Function to reset an employee's password
 async function resetEmployeePassword() {
     const employeeEmail = document.getElementById('resetEmployeeEmail').value.trim();
@@ -478,11 +521,6 @@ async function resetEmployeePassword() {
         return;
     }
 
-    // Show loading indicator (optional)
-    const loadingMessage = document.createElement('div');
-    loadingMessage.innerText = 'Resetting password...';
-    document.body.appendChild(loadingMessage);
-
     try {
         const response = await fetch(`${BASE_URL}/employees/reset-password?email=${encodeURIComponent(employeeEmail)}&newPassword=${encodeURIComponent(newPassword)}`, {
             method: 'PUT',
@@ -495,15 +533,11 @@ async function resetEmployeePassword() {
         }
 
         alert('Password reset successfully!');
-        document.getElementById('resetPasswordForm').reset(); // Reset the form after successful reset
+        resetPasswordForm(); // Reset the form after successful reset
+        showResetPasswordForm(); // Hide the reset password form
     } catch (error) {
         console.error('Error resetting password:', error);
         alert('Error resetting password: ' + error.message);
-    } finally {
-        // Remove loading indicator
-        if (loadingMessage) {
-            document.body.removeChild(loadingMessage);
-        }
     }
 }
 
@@ -593,6 +627,7 @@ document.getElementById('createEmployeeForm').addEventListener('submit', functio
 });
 
             //FINANCE
+
 // Fetch and display finance records for admin
 async function fetchAdminFinanceRecords() {
     try {
@@ -1330,7 +1365,7 @@ let notifications = []; // Store notifications in an array
 
 function connectWebSocket() {
     const token = localStorage.getItem('jwt'); // Retrieve the JWT from local storage
-    const socket = new SockJS(`http://localhost:8082/notifications?token=${token}`); // Include token in the URL
+    const socket = new SockJS(`http://192.168.100.39:8082/notifications?token=${token}`); // Include token in the URL
     stompClient = Stomp.over(socket);
 
     stompClient.connect({}, function (frame) {
@@ -1433,7 +1468,7 @@ window.onload = function() {
 };
 // Ensure elements exist before adding event listeners
 document.addEventListener('DOMContentLoaded', () => {
-    // Call other functions
+    showSection('overview'); // Show the Overview section by default
     fetchOverviewData();
     populateEmployeeDropdown(); // Populate the employee dropdown
     fetchAdminFinanceRecords(); // Fetch and display all finance records

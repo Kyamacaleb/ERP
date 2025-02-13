@@ -1,190 +1,232 @@
+/* Define CSS Variables for easy customization */
+:root {
+    --primary-blue: #00509e;
+    --sidebar-bg: #004080;
+    --navbar-bg: #03203e;
+    --text-light: #ffffff;
+    --bg-light: #f0f4f8;
+    --dark-mode-bg: #121212;  /* Dark mode background */
+    --dark-mode-text: #ffffff; /* Dark mode text */
+}
+.hidden {
+    display: none;
+}
+/* Body */
 body {
-    background-color: #f0f4f8; /* Light background for contrast */
+    margin: 0;
+    background-color: var(--bg-light);
+    font-family: Arial, sans-serif;
+    display: flex;
     transition: background-color 0.3s;
 }
 
 /* Sidebar */
 .sidebar {
     position: fixed;
-    top: 60px; /* Start below the top bar */
+    top: 0;
     left: 0;
-    height: calc(100vh - 60px); /* Full height minus the top bar height */
-    width: 250px;
-    background: linear-gradient(135deg, #003366, #004080); /* Gradient background */
-    color: white;
+    height: 100vh;
+    width: 150px;  /* Sidebar width */
+    background: var(--sidebar-bg);
+    color: var(--text-light);
     padding-top: 20px;
     display: flex;
     flex-direction: column;
+    align-items: center;
     z-index: 1000;
-    border-right: 2px solid #00509e;
+    border-right: 2px solid var(--primary-blue);
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-    border-radius: 0 10px 10px 0;
 }
 
+/* Sidebar Links */
+.sidebar .nav-link {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 10px 5px;
+    font-size: 12px;
+    color: var(--text-light);
+    text-decoration: none;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.sidebar .nav-link i {
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+.sidebar .nav-link:hover {
+    background-color: var(--primary-blue);
+    transform: scale(1.02);
+}
+
+/* Collapsed Sidebar */
 .sidebar.collapsed {
     width: 80px;
 }
 
-.sidebar a, .sidebar .nav-link {
-    color: #ffffff; /* White text */
-    padding: 15px 20px;
-    transition: background-color 0.3s;
-    cursor: pointer; /* Add pointer cursor for better UX */
+.sidebar.collapsed .nav-link span {
+    display: none; /* Hide text */
 }
 
-.sidebar a:hover, .sidebar .nav-link:hover {
-    background-color: #00509e; /* Lighter navy on hover */
+.sidebar.collapsed .nav-link {
+    position: relative;
 }
 
-.sidebar .nav {
-    flex-grow: 1; /* Allow the nav to grow and take available space */
+/* Tooltip for Collapsed Sidebar */
+.sidebar.collapsed .nav-link:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--primary-blue);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease-in-out;
 }
 
-.sidebar .nav-item {
-    margin-bottom: 0; /* Remove margin between nav items */
+.sidebar.collapsed .nav-link:hover::after {
+    opacity: 1;
+    visibility: visible;
 }
 
-.sidebar .nav-item:last-child {
-    margin-top: auto; /* Push the last item (buttons) to the bottom */
-}
-
-.sidebar button {
-    margin-top: 10px; /* Add some space above the buttons */
-}
-
-.sidebar button:hover {
-    opacity: 0.8; /* Slightly fade on hover */
-}
-
-/* Content Area */
-.content {
-    margin-left: 250px; /* Align with the sidebar width */
-    margin-top: 60px; /* Start below the top bar */
-    padding: 20px;
-    transition: margin-left 0.3s;
-}
-
-.content.collapsed {
-    margin-left: 80px; /* Adjust for collapsed sidebar */
-}
 /* Top Bar */
 .navbar {
-    position: fixed; /* Fix the top bar at the top */
+    position: fixed;
     top: 0;
-    left: 0; /* Align with the left edge */
-    right: 0; /* Stretch to the right */
-    height: 60px; /* Set a height for the top bar */
-    background: linear-gradient(135deg, #002244, #003366); /* Gradient background */
-    color: white; /* White text */
-    display: flex; /* Use flexbox for layout */
-    align-items: center; /* Center items vertically */
-    padding: 0 20px; /* Add some padding */
-    z-index: 1001; /* Higher z-index to be on top of the sidebar */
-    transition: left 0.3s, box-shadow 0.3s; /* Smooth transition for collapsing */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Shadow for top bar */
-    border-bottom: 2px solid #00509e; /* Bottom border */
-    border-radius: 0 0 10px 10px; /* Rounded bottom corners */
+    left: 150px; /* Start after sidebar */
+    width: calc(100% - 150px);
+    height: 65px;
+    background: var(--navbar-bg);
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 1001;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border-bottom: 2px solid var(--primary-blue);
+    transition: left 0.3s, width 0.3s;
 }
 
-.navbar-brand, .navbar-nav .nav-link {
-    color: #ffffff; /* White text */
+/* Adjust Navbar when Sidebar is Collapsed */
+.sidebar.collapsed + .navbar {
+    left: 80px; /* Adjusted for smaller sidebar */
+    width: calc(100% - 80px);
 }
 
-.navbar-nav .nav-link:hover {
-    color: #ffcc99; /* Peach color on hover */
+/* Adjust Content when Sidebar is Collapsed */
+.sidebar.collapsed + .navbar + .content {
+    margin-left: 80px;
+}
+/* Main Content */
+.content {
+    margin-left: 150px; /* Match the width of the sidebar */
+    margin-top: 65px; /* Match the height of the top bar */
+    padding: 20px; /* Add some padding for better spacing */
+    width: calc(100% - 150px); /* Adjust width to account for the sidebar */
+    transition: margin-left 0.3s; /* Smooth transition for sidebar collapse */
 }
 
-/* Modal Header */
-.modal-header {
-    background-color: #00509e; /* Lighter blue */
-    color: white;
+/* Adjust content when sidebar is collapsed */
+.sidebar.collapsed + .content {
+    margin-left: 80px; /* Match the collapsed sidebar width */
+    width: calc(100% - 80px); /* Adjust width for collapsed sidebar */
 }
-
-/* Dark Mode */
 .dark-mode {
-    background-color: #343a40;
-    color: white;
+    background-color: var(--dark-mode-bg);
+    color: var(--dark-mode-text);
 }
 
-/* Utility Classes */
-.hidden {
-    display: none;
+/* Buttons */
+.small-btn {
+    padding: 6px;
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    color: var(--text-light);
+    border: none;
+    background: none;
+}
+
+.small-btn i {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.small-btn:hover {
+    opacity: 0.8;
 }
 
 /* Cards */
 .card {
     margin-bottom: 20px;
-    border: none; /* Remove card border */
-    border-radius: 8px; /* Rounded corners */
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    background-color: white; /* Ensure cards are visible */
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background-color: white;
 }
 
 /* Headings */
 h5, h6 {
-    color: #003366; /* Dark blue for headings */
+    color: #003366;
+}
+/* Specific Card Styles */
+.total-employees-card,
+.total-leaves-card,
+.total-tasks-card,
+.total-finance-card {
+    flex: 1; /* Allow cards to grow and fill the available space */
+    min-width: 250px; /* Set a minimum width for the cards */
+    max-width: 400px; /* Set a maximum width for the cards */
 }
 
-/* Text Colors */
-.text-success {
-    color: green;
-}
-
-.text-danger {
-    color: red;
+#departmentChart {
+    width: 100%; /* Ensure the chart takes the full width */
+    height: 400px; /* Set a fixed height for the chart */
 }
 
 /* Status Badges */
 .status-badge {
-    display: inline-block; /* Make it behave like a block element */
-    padding: 0.5em 1em; /* Add some padding */
-    border-radius: 0.25rem; /* Rounded corners */
-    color: white; /* Text color */
-    text-align: center; /* Center the text */
-    font-weight: bold; /* Make the text bold */
-    cursor: pointer; /* Change cursor to pointer */
-    transition: background-color 0.3s; /* Smooth transition for hover effect */
+    display: inline-block;
+    padding: 0.5em 1em;
+    border-radius: 0.25rem;
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
 
-.status-badge.pending {
-    background-color: #652803; /* Pending */
-}
-
-.status-badge.approved {
-    background-color: #042704; /* Approved */
-}
-
-.status-badge.rejected {
-    background-color: #500505; /* Rejected */
-}
-
-.status-badge.recalled {
-    background-color: #0c0c5e; /* Recalled */
-}
+.status-badge.pending { background-color: #652803; }
+.status-badge.approved { background-color: #042704; }
+.status-badge.rejected { background-color: #500505; }
+.status-badge.recalled { background-color: #0c0c5e; }
 
 .status-badge:hover {
-    opacity: 0.8; /* Slightly fade on hover */
+    opacity: 0.8;
 }
 
 /* Dropdown Menu */
 .dropdown-menu {
     max-height: 300px;
     overflow-y: auto;
-    padding: 0; /* Remove default padding */
+    padding: 0;
 }
 
 .dropdown-menu .dropdown-item {
-    padding: 8px 16px; /* Add padding for better readability */
+    padding: 8px 16px;
 }
 
-.finance-section {
-    margin-bottom: 30px;
-}
-
-.btn {
-    margin-right: 10px;
-}
-
+/* Table Styles */
 .table {
     width: 100%;
     margin-bottom: 1rem;
@@ -203,8 +245,7 @@ h5, h6 {
     border: 1px solid #dee2e6;
 }
 
-.table-bordered th,
-.table-bordered td {
+.table-bordered th, .table-bordered td {
     border: 1px solid #dee2e6;
 }
 
@@ -212,18 +253,33 @@ h5, h6 {
     vertical-align: bottom;
     border-bottom: 2px solid #dee2e6;
 }
-#notificationArea { margin-bottom: 20px; /* Add some space below the notification area */ }
-
-#notificationDisplayArea .alert { margin-bottom: 10px; /* Space between notifications */ }
-.read {
-    background-color: #e0e0e0; /* Light gray background for read notifications */
+.table-primary {
+    background-color: #007bff !important; /* Bootstrap primary color */
+    color: white; /* Change text color to white */
 }
-/* Style to grey out future dates */
+
+/* Notifications */
+#notificationArea {
+    margin-bottom: 20px;
+}
+
+#notificationDisplayArea .alert {
+    margin-bottom: 10px;
+}
+
+.read {
+    background-color: #e0e0e0;
+}
+
+/* Grey out future dates */
 input[type="date"]:disabled {
     background-color: #f0f0f0;
     color: #a0a0a0;
 }
+
+/* Urgent Checkbox */
 .urgent-checkbox {
-    accent-color: red; /* Change the color of the checkbox */
-    transform: scale(1.5); /* Make the checkbox larger */
+    accent-color: red;
+    transform: scale(1.5);
 }
+
