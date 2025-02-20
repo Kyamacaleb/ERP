@@ -75,10 +75,148 @@ function showEditLeaveRequestModal() {
     const editLeaveRequestModal = new bootstrap.Modal(modal);
     editLeaveRequestModal.show();
 }
+async function fetchLeavesData(status = null) {
+    const url = status ? `${BASE_URL}/api/leaves/filter?status=${status}` : `${BASE_URL}/api/leaves/me`;
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch leaves data');
+    }
+    return await response.json(); // Returns an array of leaves based on the filter
+}
+
+async function fetchFinancesData(status = null) {
+    const url = status ? `${BASE_URL}/api/finances/filter?status=${status}` : `${BASE_URL}/api/finances/me`;
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch finances data');
+    }
+    return await response.json(); // Returns an array of finances based on the filter
+}
+async function fetchTasksData(status = null) {
+    const url = status ? `${BASE_URL}/api/tasks/filter?status=${status}` : `${BASE_URL}/api/tasks/me/non-started`;
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch tasks data');
+    }
+    return await response.json(); // Returns an array of tasks based on the filter
+}
+
+async function renderCharts() {
+    try {
+        const pendingLeaves = await fetchLeavesData('Pending');
+        const approvedLeaves = await fetchLeavesData('Approved');
+        const rejectedLeaves = await fetchLeavesData('Rejected');
+
+        const pendingFinances = await fetchFinancesData('Pending');
+        const approvedFinances = await fetchFinancesData('Approved');
+        const rejectedFinances = await fetchFinancesData('Rejected');
+
+        const pendingTasks = await fetchTasksData('Not Started');
+        const inProgressTasks = await fetchTasksData('In Progress');
+        const completedTasks = await fetchTasksData('Completed');
+
+        // Update counts in cards
+        document.getElementById('pendingLeavesCount').textContent = pendingLeaves.length;
+        document.getElementById('pendingFinancesCount').textContent = pendingFinances.length;
+        document.getElementById('pendingTasksCount').textContent = pendingTasks.length;
+
+        // Define colors for each category
+        const colors = {
+            pending: '#FFC107',  // Yellow
+            approved: '#006400', // Dark Green
+            rejected: '#DC3545', // Red
+            notStarted: '#DC3545',  // Red (Tasks)
+            inProgress: '#FFC107', // Yellow (Tasks)
+            completed: '#008000'   // Green (Tasks)
+        };
+
+        // Render Leaves Chart as Pie Chart
+        Highcharts.chart('leavesChart', {
+            chart: { type: 'pie' },
+            title: { text: 'Leaves Status' },
+            series: [{
+                name: 'Leaves',
+                colorByPoint: true,
+                data: [{
+                    name: 'Pending',
+                    y: pendingLeaves.length,
+                    color: colors.pending
+                }, {
+                    name: 'Approved',
+                    y: approvedLeaves.length,
+                    color: colors.approved
+                }, {
+                    name: 'Rejected',
+                    y: rejectedLeaves.length,
+                    color: colors.rejected
+                }]
+            }]
+        });
+
+        // Render Finances Chart as Pie Chart
+        Highcharts.chart('financesChart', {
+            chart: { type: 'pie' },
+            title: { text: 'Finance Status' },
+            series: [{
+                name: 'Finances',
+                colorByPoint: true,
+                data: [{
+                    name: 'Approved',
+                    y: approvedFinances.length,
+                    color: colors.approved
+                }, {
+                    name: 'Pending',
+                    y: pendingFinances.length,
+                    color: colors.pending
+                }, {
+                    name: 'Rejected',
+                    y: rejectedFinances.length,
+                    color: colors.rejected
+                }]
+            }]
+        });
+
+        // Render Tasks Chart as Pie Chart
+        Highcharts.chart('tasksChart', {
+            chart: { type: 'pie' },
+            title: { text: 'Task Status' },
+            series: [{
+                name: 'Tasks',
+                colorByPoint: true,
+                data: [{
+                    name: 'Not Started',
+                    y: pendingTasks.length,
+                    color: colors.notStarted
+                }, {
+                    name: 'In Progress',
+                    y: inProgressTasks.length,
+                    color: colors.inProgress
+                }, {
+                    name: 'Completed',
+                    y: completedTasks.length,
+                    color: colors.completed
+                }]
+            }]
+        });
+
+    } catch (error) {
+        console.error('Error rendering charts:', error);
+    }
+}
 
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('Employee dashboard script loaded');
     try {
+        renderCharts()
         await loadPersonalInfo();
         console.log('Personal info loaded');
         await loadContacts();
@@ -138,6 +276,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Logout function
 function logout() {
     console.log('Logout function called');
+    localStorage.removeItem('notifications'); // Clear stored notifications
     localStorage.removeItem('userToken');
     window.location.href = '/'; // Redirect to the home page or login page
 }
@@ -1176,7 +1315,7 @@ let notifications = []; // Store notifications in an array
 
 function connectWebSocket() {
     const token = localStorage.getItem('jwt'); // Retrieve the JWT from local storage
-    const socket = new SockJS(`http://192.168.100.39:8082/notifications?token=${token}`); // Include token in the URL
+    const socket = new SockJS(`http://192.168.100.39:8082 /notifications?token=${token}`); // Include token in the URL
     stompClient = Stomp.over(socket);
 
     stompClient.connect({}, function (frame) {
@@ -1194,31 +1333,37 @@ function connectWebSocket() {
 function handleNotification(notification) {
     console.log('New notification:', notification); // Debugging log
 
-    // Check if notification has the expected structure
     if (!notification.message || !notification.timestamp) {
         console.error('Notification does not have the required properties:', notification);
         return;
     }
 
-    // Check for duplicates before adding
-    const exists = notifications.some(n => n.message === notification.message && n.timestamp === notification.timestamp);
-    if (exists) {
+    // Generate a unique identifier
+    const notificationId = `${notification.message}-${notification.timestamp}`;
+
+    // Check if the notification already exists (avoid duplicates)
+    const existingNotifications = new Set(notifications.map(n => `${n.message}-${n.timestamp}`));
+
+    if (existingNotifications.has(notificationId)) {
         console.log('Duplicate notification, not adding:', notification);
-        return; // Exit if it's a duplicate
+        return;
     }
 
-    // Add the notification to the notifications array with a read status
+    // Add the notification to the array with a read status
     notifications.push({ ...notification, read: false });
-    saveNotifications(); // Save notifications to localStorage
 
-    // Display the notification
+    // Save and update notifications
+    saveNotifications();
     displayNotifications();
-    updateNotificationCount(); // Update the notification count
+    updateNotificationCount();
 }
 
-// Function to save notifications to localStorage
+// Function to save notifications to localStorage (ensure uniqueness)
 function saveNotifications() {
-    localStorage.setItem('notifications', JSON.stringify(notifications));
+    const uniqueNotifications = Array.from(
+        new Map(notifications.map(n => [`${n.message}-${n.timestamp}`, n])).values()
+    );
+    localStorage.setItem('notifications', JSON.stringify(uniqueNotifications));
 }
 
 // Function to load notifications from localStorage
@@ -1236,58 +1381,54 @@ function displayNotifications() {
 
     notifications.forEach((notification, index) => {
         const notificationItem = document.createElement('div');
-        notificationItem.className = `alert alert-info ${notification.read ? 'read' : ''}`; // Add a class if read
-        notificationItem.innerText = `${notification.message} (Received at: ${new Date(notification.timestamp).toLocaleString()})`; // Display message and timestamp
+        notificationItem.className = `alert alert-info ${notification.read ? 'read' : ''}`;
+        notificationItem.innerText = `${notification.message} (Received at: ${new Date(notification.timestamp).toLocaleString()})`;
 
-        // Only add the button if the notification is not read
         if (!notification.read) {
             const markAsReadButton = document.createElement('button');
             markAsReadButton.className = 'btn btn-success btn-sm float-right';
             markAsReadButton.innerText = 'Mark as Read';
             markAsReadButton.onclick = function () {
-                markNotificationAsRead(index);  // Mark this notification as read
+                markNotificationAsRead(index);
             };
 
-            notificationItem.appendChild(markAsReadButton); // Append the button
+            notificationItem.appendChild(markAsReadButton);
         }
 
-        notificationDisplayArea.appendChild(notificationItem); // Append the notification item
+        notificationDisplayArea.appendChild(notificationItem);
     });
 
-    // Update the notification count
-    notificationCount = notifications.filter(n => !n.read).length; // Count unread notifications
-    document.getElementById('notificationCount').innerText = notificationCount;
+    updateNotificationCount();
 }
 
 // Function to mark a specific notification as read
 function markNotificationAsRead(index) {
-    notifications[index].read = true; // Set the read status to true
-    saveNotifications(); // Save updated notifications to localStorage
-    displayNotifications(); // Refresh the display
+    notifications[index].read = true;
+    saveNotifications();
+    displayNotifications();
 }
 
 // Mark all notifications as read
 document.getElementById('markAllAsRead').addEventListener('click', function () {
-    notifications.forEach(notification => notification.read = true); // Mark all as read
-    saveNotifications(); // Save updated notifications to localStorage
-    displayNotifications(); // Refresh the display
+    notifications.forEach(notification => (notification.read = true));
+    saveNotifications();
+    displayNotifications();
 });
 
 // Link the notification button to the notification section
 document.getElementById('notificationButton').addEventListener('click', function() {
-    showSection('notificationManagement'); // Show the notification section
+    showSection('notificationManagement');
 });
 
 // Function to update the notification count display
 function updateNotificationCount() {
-    notificationCount = notifications.filter(n => !n.read).length; // Count unread notifications
+    notificationCount = notifications.filter(n => !n.read).length;
     document.getElementById('notificationCount').innerText = notificationCount;
 }
 
 // Load notifications when the page is loaded
 window.onload = function() {
-    loadNotifications(); // Load notifications from localStorage
-    displayNotifications(); // Display loaded notifications
-    connectWebSocket(); // Connect to WebSocket
+    loadNotifications();
+    displayNotifications();
+    connectWebSocket();
 };
-

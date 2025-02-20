@@ -141,11 +141,12 @@ public class LeaveController {
     }
     // Filter leave requests
     @GetMapping("/filter")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Leave>> filterLeaveRequests(
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
+    public ResponseEntity<List<Leave>> getAllLeaves(
             @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "type", required = false) String type) {
-        return new ResponseEntity<>(leaveService.filterLeaves(status, type), HttpStatus.OK);
+        List<Leave> leaves = leaveService.filterLeaves(status, type);
+        return ResponseEntity.ok(leaves);
     }
 
     // View leave statistics

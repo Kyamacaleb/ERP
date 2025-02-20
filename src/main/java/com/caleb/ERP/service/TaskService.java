@@ -137,4 +137,10 @@ public class TaskService {
     public boolean isValidTaskName(String taskName) {
         return taskName != null && taskName.matches("[a-zA-Z0-9\\s\\p{Punct}]+");
     }
+    public List<Task> filterTasks(String status) {
+        if (status != null) {
+            return taskRepository.findByStatus(status);
+        }
+        return taskRepository.findAll();
+    }
 }

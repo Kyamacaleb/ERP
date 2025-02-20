@@ -265,4 +265,12 @@ public class FinanceController {
         List<Finance> pendingFinances = financeService.getPendingFinancesByCurrentEmployee(employeeId);
         return new ResponseEntity<>(pendingFinances, HttpStatus.OK);
     }
+    // Filter finances by status
+    @GetMapping("/filter")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
+    public ResponseEntity<List<Finance>> filterFinances(
+            @RequestParam(value = "status", required = false) String status) {
+        List<Finance> finances = financeService.filterFinances(status);
+        return ResponseEntity.ok(finances);
+    }
 }

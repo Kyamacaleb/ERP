@@ -119,4 +119,11 @@ public class TaskController {
         List<Task> pendingTasks = taskService.getPendingTasksByCurrentEmployee(employeeId);
         return new ResponseEntity<>(pendingTasks, HttpStatus.OK);
     }
+    @GetMapping("/filter")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
+    public ResponseEntity<List<Task>> getAllTasks(
+            @RequestParam(value = "status", required = false) String status) {
+        List<Task> tasks = taskService.filterTasks(status);
+        return ResponseEntity.ok(tasks);
+    }
 }

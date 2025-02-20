@@ -299,4 +299,5 @@ public class LeaveService {
         // Assuming you have a method in your repository to find leaves by employee email and status
         return leaveRepository.findByEmployeeEmailAndStatus(employeeEmail, "Pending");
     }
+
 }

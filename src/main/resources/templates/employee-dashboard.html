@@ -11,6 +11,10 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+    <script src="https://code.highcharts.com/highcharts-3d.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         .hidden {
@@ -84,43 +88,71 @@
     </div>
 </div>
 <!-- Main Content -->
-<div class="content">
-    <div class="container mt-5">
+<div class="content" id="content">
+    <div class="container-fluid mt-5"> <!-- Full width for flexibility -->
         <div class="dashboard-section" id="overview">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h2 class="section-title">Overview</h2>
-                    <div class="row">
-                        <!-- Pending leave Card -->
-                        <div class="col-md-4">
-                            <a href="#" onclick="showSection('leaveManagement')" class="card overview-card text-center">
-                                <div class="card-body">
-                                    <i class="fas fa-calendar-alt card-icon"></i>
-                                    <h5 class="card-title">Pending Leaves</h5>
-                                    <p id="pendingLeavesCount" class="card-text">0</p> <!-- Initialized to 0 -->
-                                </div>
+            <h2 class="section-title">Overview</h2>
+            <div class="row">
+                <!-- Pending Leave Card -->
+                <div class="col-md-4 mb-4">
+                    <div class="card overview-card text-center border-primary">
+                        <div class="card-body">
+                            <i class="fas fa-calendar-alt fa-3x text-primary"></i>
+                            <h5 class="card-title">Pending Leaves</h5>
+                            <a href="#" onclick="showSection('leaveManagement')">
+                                <h2 id="pendingLeavesCount">0</h2>
                             </a>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Pending Finance Requests Card -->
-                        <div class="col-md-4">
-                            <a href="#" onclick="showSection('financeManagement')" class="card overview-card text-center">
-                                <div class="card-body">
-                                    <i class="fas fa-money-bill-wave card-icon"></i>
-                                    <h5 class="card-title">Pending Finances</h5>
-                                    <p id="pendingFinancesCount" class="card-text">0</p> <!-- Initialized to 0 -->
-                                </div>
+                <!-- Pending Finance Requests Card -->
+                <div class="col-md-4 mb-4">
+                    <div class="card overview-card text-center border-success">
+                        <div class="card-body">
+                            <i class="fas fa-money-bill-wave fa-3x text-success"></i>
+                            <h5 class="card-title">Pending Finances</h5>
+                            <a href="#" onclick="showSection('financeManagement')">
+                                <h2 id="pendingFinancesCount">0</h2>
                             </a>
                         </div>
-                        <!-- Pending Task Requests Card -->
-                        <div class="col-md-4">
-                            <a href="#" onclick="showSection('taskManagement')" class="card overview-card text-center">
-                                <div class="card-body">
-                                    <i class="fas fa-tasks card-icon"></i>
-                                    <h5 class="card-title">Pending Tasks</h5>
-                                    <p id="pendingTasksCount" class="card-text">0</p> <!-- Initialized to 0 -->
-                                </div>
+                    </div>
+                </div>
+                <!-- Pending Task Requests Card -->
+                <div class="col-md-4 mb-4">
+                    <div class="card overview-card text-center border-warning">
+                        <div class="card-body">
+                            <i class="fas fa-tasks fa-3x text-warning"></i>
+                            <h5 class="card-title">Pending Tasks</h5>
+                            <a href="#" onclick="showSection('taskManagement')">
+                                <h2 id="pendingTasksCount">0</h2>
                             </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Chart Section -->
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div id="leavesChart" style="width: 100%; height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="financesChart" style="width: 100%; height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="tasksChart" style="width: 100%; height: 400px;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -750,11 +782,19 @@
         }
     }
     function toggleSidebar() {
-        const sidebar = document.querySelector('.sidebar');
-        sidebar.classList.toggle('collapsed'); // Add a class to collapse/expand
-        const content = document.querySelector('.content');
-        content.classList.toggle('collapsed'); // Adjust content margin when sidebar is collapsed
+        let sidebar = document.querySelector('.sidebar');
+        let content = document.querySelector('.content');
+
+        sidebar.classList.toggle('collapsed');
+
+        // Adjust content width dynamically
+        if (sidebar.classList.contains('collapsed')) {
+            content.style.width = "calc(100% - 70px)";
+        } else {
+            content.style.width = "calc(100% - 250px)";
+        }
     }
+
     document.addEventListener('DOMContentLoaded', () => {
         showSection('overview'); // Show the overview section by default
 

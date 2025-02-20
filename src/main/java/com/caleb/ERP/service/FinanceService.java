@@ -239,4 +239,10 @@ public class FinanceService {
         // Now use the employee object to find pending finances
         return financeRepository.findByEmployeeAndStatus(employee, "Pending");
     }
+    public List<Finance> filterFinances(String status) {
+        if (status != null) {
+            return financeRepository.findByStatus(status);
+        }
+        return financeRepository.findAll();
+    }
 }

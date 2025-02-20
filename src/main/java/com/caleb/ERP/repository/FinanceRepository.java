@@ -11,4 +11,6 @@ import java.util.UUID;
 @Repository
 public interface FinanceRepository extends JpaRepository<Finance, UUID> {
     List<Finance> findByEmployeeAndStatus(Employee employee, String status);
+
+    List<Finance> findByStatus(String status);
 }

@@ -616,6 +616,7 @@ function populateContactCards(contacts) {
 // Logout function
 function logout() {
     console.log('Logout function called');
+    localStorage.removeItem('notifications');
     localStorage.removeItem('userToken');
     window.location.href = '/';
 }
@@ -1357,7 +1358,6 @@ function setMinDueDate() {
 // Call the function to set the minimum date when the page loads
 window.onload = setMinDueDate;
 
-
 // NOTIFICATIONS
 let stompClient = null;
 let notificationCount = 0;
@@ -1401,6 +1401,20 @@ function handleNotification(notification) {
 
     // Display the notification
     displayNotifications();
+    updateNotificationCount(); // Update the notification count
+}
+
+// Function to save notifications to localStorage
+function saveNotifications() {
+    localStorage.setItem('notifications', JSON.stringify(notifications));
+}
+
+// Function to load notifications from localStorage
+function loadNotifications() {
+    const savedNotifications = localStorage.getItem('notifications');
+    if (savedNotifications) {
+        notifications = JSON.parse(savedNotifications);
+    }
 }
 
 // Function to display notifications
@@ -1429,36 +1443,28 @@ function displayNotifications() {
     });
 
     // Update the notification count
-    notificationCount = notifications.filter(n => !n.read).length; // Count unread notifications
-    document.getElementById('notificationCount').innerText = notificationCount;
+    updateNotificationCount();
 }
 
 // Function to mark a specific notification as read
 function markNotificationAsRead(index) {
     notifications[index].read = true; // Set the read status to true
-    saveNotifications(); // Save notifications to localStorage
+    saveNotifications(); // Save updated notifications to localStorage
     displayNotifications(); // Refresh the display
-}
-
-// Function to save notifications to localStorage
-function saveNotifications() {
-    localStorage.setItem('notifications', JSON.stringify(notifications));
-}
-
-// Function to load notifications from localStorage
-function loadNotifications() {
-    const savedNotifications = localStorage.getItem('notifications');
-    if (savedNotifications) {
-        notifications = JSON.parse(savedNotifications);
-    }
 }
 
 // Mark all notifications as read
 document.getElementById('markAllAsRead').addEventListener('click', function () {
     notifications.forEach(notification => notification.read = true); // Mark all as read
-    saveNotifications(); // Save notifications to localStorage
+    saveNotifications(); // Save updated notifications to localStorage
     displayNotifications(); // Refresh the display
 });
+
+// Function to update the notification count display
+function updateNotificationCount() {
+    notificationCount = notifications.filter(n => !n.read).length; // Count unread notifications
+    document.getElementById('notificationCount').innerText = notificationCount;
+}
 
 // Load notifications when the page is loaded
 window.onload = function() {
@@ -1466,6 +1472,7 @@ window.onload = function() {
     displayNotifications(); // Display loaded notifications
     connectWebSocket(); // Connect to WebSocket
 };
+
 // Ensure elements exist before adding event listeners
 document.addEventListener('DOMContentLoaded', () => {
     showSection('overview'); // Show the Overview section by default
