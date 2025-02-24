@@ -291,6 +291,11 @@ public class EmployeeService implements UserDetailsService {
         Employee employee = (Employee) employeeRepository.findByEmail(email)
                 .orElseThrow(() -> new NoSuchElementException("Employee not found"));
 
+        // Check if the employee is active
+        if (!employee.isActive()) {
+            throw new IllegalArgumentException("Cannot reset password for inactive employees.");
+        }
+
         // Hash the new password
         employee.setPassword(passwordEncoder.encode(newPassword));
 
@@ -302,7 +307,7 @@ public class EmployeeService implements UserDetailsService {
                 employee.getFullName());
         notificationService.sendAdminNotification(adminMessage);
 
-// Send notification to the employee
+        // Send notification to the employee
         String employeeMessage = String.format("Hello %s, your password has been reset. Please check your email for instructions on how to set a new password.",
                 employee.getFullName());
         notificationService.sendEmployeeNotification(employeeMessage);

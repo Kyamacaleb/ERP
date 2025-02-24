@@ -53,7 +53,7 @@ window.addEventListener('load', function () {
 $(document).ready(function () {
     $('[data-toggle="tooltip"]').tooltip();
 });
-const BASE_URL = 'http://192.168.100.39:8082/api'; // Adjust the base URL as needed
+const BASE_URL = 'http://localhost:8082/api'; // Adjust the base URL as needed
 
 async function fetchOverviewData() {
     try {
@@ -221,13 +221,7 @@ function validateEmployeeData(employeeData) {
 }
 function showCreateEmployeeForm() {
     resetForm(); // Reset the form fields when showing the form
-    const createEmployeeFormContainer = document.getElementById('createEmployeeFormContainer');
-
-    if (createEmployeeFormContainer.classList.contains('hidden')) {
-        createEmployeeFormContainer.classList.remove('hidden'); // Show the form
-    } else {
-        createEmployeeFormContainer.classList.add('hidden'); // Hide the form
-    }
+    $('#createEmployeeModal').modal('show'); // Show the modal
 }
 // Function to create an employee
 async function createEmployee() {
@@ -290,14 +284,12 @@ async function createEmployee() {
             console.log('Contact created successfully!');
         }
 
-
         resetForm(); // Reset the form after creation
+        $('#createEmployeeModal').modal('hide'); // Close the modal
         getAllEmployees(); // Refresh the employee list
         getAllContacts(); // Refresh the contact list
         fetchOverviewData();
 
-        // Hide the create employee form after successful creation
-        showCreateEmployeeForm(); // This will toggle the form visibility
     } catch (error) {
         console.error('Error creating employee:', error);
         alert('Error creating employee: ' + error.message);
@@ -401,8 +393,15 @@ function populateEmployeeTable(employees) {
             <td>${employee.emergencyContactPhone}</td> <!-- New field -->
             <td class="${statusClass}">${statusText}</td> <!-- Apply status class -->
             <td>
-                <button class="btn btn-warning" onclick="editEmployee('${employee.employeeId}')">Edit</button>
-                <button class="btn btn-danger" onclick="deactivateEmployee('${employee.employeeId}')">Deactivate</button>
+                <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Actions
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            <a class="dropdown-item" href="#" onclick="editEmployee('${employee.employeeId}')">Edit</a>
+            <a class="dropdown-item" href="#" onclick="deactivateEmployee('${employee.employeeId}')">Deactivate</a>
+            <a class="dropdown-item" href="#" onclick="showResetPasswordModal('${employee.email}')">Reset Password</a>
+        </div>
             </td>
         `;
         employeeTableBody.appendChild(row);
@@ -432,6 +431,8 @@ async function editEmployee(empId) {
         document.getElementById('updateEmergencyContactName').value = employee.emergencyContactName;
         document.getElementById('updateEmergencyContactNumber').value = employee.emergencyContactPhone;
         document.getElementById('updateEmployeeDepartment').value = employee.department;
+        document.getElementById('employeeJoiningDate').value = employee.dateOfJoining; // Add this line
+
 
         // Store the employee ID in a hidden field or a global variable
         window.currentEmployeeId = empId; // Store the employee ID globally
@@ -486,26 +487,23 @@ async function updateEmployee() {
         alert('Error updating employee: ' + error.message);
     }
 }
-function showResetPasswordForm() {
-    const resetPasswordFormContainer = document.getElementById('resetPasswordFormContainer');
-
-    // Toggle visibility of the reset password form
-    if (resetPasswordFormContainer.classList.contains('hidden')) {
-        resetPasswordFormContainer.classList.remove('hidden'); // Show the form
-    } else {
-        resetPasswordFormContainer.classList.add('hidden'); // Hide the form
-    }
-
-    // Reset the form fields when showing the form
-    resetPasswordForm(); // Call the reset function to clear any previous errors
+function showResetPasswordModal(email) {
+    document.getElementById('resetEmployeeEmail').value = email; // Set the email in the modal
+    resetPasswordForm(); // Reset the form fields
+    $('#resetPasswordModal').modal('show'); // Show the modal
 }
 
 // Function to reset the reset password form
 function resetPasswordForm() {
-    document.getElementById('resetPasswordForm').reset(); // Reset the form fields
-    document.getElementById('resetEmployeeEmailError').innerText = ''; // Clear previous error messages
-    document.getElementById('newPasswordError').innerText = ''; // Clear previous error messages
+    // Clear previous error messages
+    document.getElementById('resetEmployeeEmailError').innerText = '';
+    document.getElementById('newPasswordError').innerText = '';
+
+    // Optionally, you can clear the input fields if needed
+    document.getElementById('resetEmployeeEmail').value = ''; // Clear email field
+    document.getElementById('newPassword').value = ''; // Clear password field
 }
+
 // Function to reset an employee's password
 async function resetEmployeePassword() {
     const employeeEmail = document.getElementById('resetEmployeeEmail').value.trim();
@@ -527,20 +525,26 @@ async function resetEmployeePassword() {
             headers: getAuthHeaders()
         });
 
+        // Check if the response is not OK
         if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Failed to reset password: ${errorText}`);
+            // Check if the error indicates that the employee is inactive
+            if (errorText.includes("Cannot reset password for inactive employees.")) {
+                alert("Cannot reset password for inactive employees.");
+            } else {
+                throw new Error(`Failed to reset password: ${errorText}`);
+            }
+        } else {
+            // Only show this alert if the response is OK
+            alert('Password reset successfully!');
+            resetPasswordForm(); // Reset the form after successful reset
+            $('#resetPasswordModal').modal('hide'); // Hide the modal after successful reset
         }
-
-        alert('Password reset successfully!');
-        resetPasswordForm(); // Reset the form after successful reset
-        showResetPasswordForm(); // Hide the reset password form
     } catch (error) {
         console.error('Error resetting password:', error);
         alert('Error resetting password: ' + error.message);
     }
 }
-
 // Function to close the update modal
 function closeUpdateModal() {
     $('#updateEmployeeModal').modal('hide'); // Hide the modal
@@ -1361,117 +1365,198 @@ window.onload = setMinDueDate;
 // NOTIFICATIONS
 let stompClient = null;
 let notificationCount = 0;
-let notifications = []; // Store notifications in an array
+let notifications = [];
+let currentPage = 1;
+let itemsPerPage = 5; // Default number of items per page
 
 function connectWebSocket() {
-    const token = localStorage.getItem('jwt'); // Retrieve the JWT from local storage
-    const socket = new SockJS(`http://192.168.100.39:8082/notifications?token=${token}`); // Include token in the URL
+    const token = localStorage.getItem('jwt');
+    const socket = new SockJS(`http://localhost:8082/notifications?token=${token}`);
     stompClient = Stomp.over(socket);
 
     stompClient.connect({}, function (frame) {
-        console.log('Connected: ' + frame);
-        // Subscribe to the admin notifications topic
+        console.log('Connected:', frame);
         stompClient.subscribe('/topic/admins', function (notification) {
-            handleNotification(JSON.parse(notification.body));
+            try {
+                handleNotification(JSON.parse(notification.body));
+            } catch (error) {
+                console.error('Error parsing notification:', error);
+            }
         });
     }, function (error) {
         console.error('WebSocket connection error:', error);
+        setTimeout(connectWebSocket, 5000);
     });
 }
 
 function handleNotification(notification) {
-    console.log('New notification:', notification); // Debugging log
-
-    // Check if notification has the expected structure
     if (!notification.message || !notification.timestamp) {
-        console.error('Notification does not have the required properties:', notification);
+        console.error('Invalid notification structure:', notification);
         return;
     }
+    if (notifications.some(n => n.message === notification.message && n.timestamp === notification.timestamp)) return;
 
-    // Check for duplicates
-    const exists = notifications.some(n => n.message === notification.message && n.timestamp === notification.timestamp);
-    if (exists) {
-        console.log('Duplicate notification, not adding:', notification);
-        return; // Exit if it's a duplicate
-    }
-
-    // Add the notification to the notifications array with a read status
     notifications.push({ ...notification, read: false });
-    saveNotifications(); // Save notifications to localStorage
-
-    // Display the notification
+    saveNotifications();
     displayNotifications();
-    updateNotificationCount(); // Update the notification count
+    updateNotificationCount();
 }
 
-// Function to save notifications to localStorage
 function saveNotifications() {
     localStorage.setItem('notifications', JSON.stringify(notifications));
 }
 
-// Function to load notifications from localStorage
 function loadNotifications() {
     const savedNotifications = localStorage.getItem('notifications');
     if (savedNotifications) {
-        notifications = JSON.parse(savedNotifications);
+        try {
+            notifications = JSON.parse(savedNotifications);
+        } catch (error) {
+            console.error('Error loading notifications:', error);
+            notifications = [];
+        }
     }
 }
 
-// Function to display notifications
 function displayNotifications() {
     const notificationDisplayArea = document.getElementById('notificationDisplayArea');
-    notificationDisplayArea.innerHTML = ''; // Clear existing notifications
+    notificationDisplayArea.innerHTML = notifications.length === 0 ? '<p class="text-muted">No notifications available.</p>' : '';
 
-    notifications.forEach((notification, index) => {
+    notifications.sort((a, b) => (!a.read && b.read ? -1 : a.read && !b.read ? 1 : b.timestamp - a.timestamp));
+    const start = (currentPage - 1) * itemsPerPage;
+    const paginatedNotifications = notifications.slice(start, start + itemsPerPage);
+
+    paginatedNotifications.forEach((notification, index) => {
         const notificationItem = document.createElement('div');
-        notificationItem.className = `alert alert-info ${notification.read ? 'read' : ''}`; // Add a class if read
-        notificationItem.innerText = `${notification.message} (Received at: ${new Date(notification.timestamp).toLocaleString()})`; // Display message and timestamp
+        notificationItem.className = `alert ${notification.read ? 'alert-secondary' : 'alert-info'}`;
 
-        // Only add the button if the notification is not read
+        const messageSpan = document.createElement('span');
+        messageSpan.innerText = notification.read
+            ? `${notification.message} (Received at: ${new Date(notification.timestamp).toLocaleString()})`
+            : `${notification.message.substring(0, 50)}...`;
+
+        notificationItem.appendChild(messageSpan);
+
         if (!notification.read) {
-            const markAsReadButton = document.createElement('button');
-            markAsReadButton.className = 'btn btn-success btn-sm float-right';
-            markAsReadButton.innerText = 'Mark as Read';
-            markAsReadButton.onclick = function () {
-                markNotificationAsRead(index);  // Mark this notification as read
+            const readMoreLink = document.createElement('a');
+            readMoreLink.href = '#';
+            readMoreLink.innerText = ' Read More';
+            readMoreLink.onclick = function (event) {
+                event.preventDefault();
+                markNotificationAsRead(start + index);
+                notificationItem.className = 'alert alert-secondary';
+                messageSpan.innerText = `${notification.message} (Received at: ${new Date(notification.timestamp).toLocaleString()})`;
+                readMoreLink.remove();
+                updateNotificationCount();
             };
-
-            notificationItem.appendChild(markAsReadButton); // Append the button
+            notificationItem.appendChild(readMoreLink);
         }
 
-        notificationDisplayArea.appendChild(notificationItem); // Append the notification item
+        notificationDisplayArea.appendChild(notificationItem);
     });
 
-    // Update the notification count
+    updatePaginationControls();
     updateNotificationCount();
 }
 
-// Function to mark a specific notification as read
-function markNotificationAsRead(index) {
-    notifications[index].read = true; // Set the read status to true
-    saveNotifications(); // Save updated notifications to localStorage
-    displayNotifications(); // Refresh the display
+function updatePaginationControls() {
+    const paginationArea = document.getElementById('paginationControls');
+    paginationArea.innerHTML = '';
+
+    const totalPages = Math.ceil(notifications.length / itemsPerPage);
+
+    if (totalPages > 1) {
+        const pageNumbersDiv = document.createElement('div');
+        pageNumbersDiv.className = 'd-flex align-items-center'; // Align numbers together
+
+        for (let i = 1; i <= totalPages; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.innerText = i;
+            pageButton.className = i === currentPage ? 'btn btn-primary mx-1' : 'btn btn-secondary mx-1';
+            pageButton.onclick = function () {
+                currentPage = i;
+                displayNotifications();
+            };
+            pageNumbersDiv.appendChild(pageButton);
+        }
+
+        paginationArea.appendChild(pageNumbersDiv);
+    }
 }
 
-// Mark all notifications as read
-document.getElementById('markAllAsRead').addEventListener('click', function () {
-    notifications.forEach(notification => notification.read = true); // Mark all as read
-    saveNotifications(); // Save updated notifications to localStorage
-    displayNotifications(); // Refresh the display
+document.getElementById('showEntries').addEventListener('change', function () {
+    itemsPerPage = parseInt(this.value, 10);
+    currentPage = 1; // Reset to first page
+    displayNotifications();
 });
 
-// Function to update the notification count display
-function updateNotificationCount() {
-    notificationCount = notifications.filter(n => !n.read).length; // Count unread notifications
-    document.getElementById('notificationCount').innerText = notificationCount;
+function markNotificationAsRead(index) {
+    if (!notifications[index].read) {
+        notifications[index].read = true;
+        saveNotifications();
+    }
 }
 
-// Load notifications when the page is loaded
+document.getElementById('markAllAsRead').addEventListener('click', function () {
+    notifications.forEach(notification => notification.read = true);
+    saveNotifications();
+    displayNotifications();
+});
+
+document.getElementById('refreshNotifications').addEventListener('click', function () {
+    loadNotifications();
+    displayNotifications();
+});
+
+function updateNotificationCount() {
+    notificationCount = notifications.filter(n => !n.read).length;
+    const notificationCountElement = document.getElementById('notificationCount');
+    if (notificationCountElement) {
+        notificationCountElement.innerText = notificationCount;
+    }
+}
+
+document.getElementById('searchInput').addEventListener('input', function () {
+    const searchTerm = this.value.toLowerCase();
+    const filteredNotifications = notifications.filter(notification =>
+        notification.message.toLowerCase().includes(searchTerm)
+    );
+    displayFilteredNotifications(filteredNotifications);
+});
+
+function displayFilteredNotifications(filteredNotifications) {
+    const notificationDisplayArea = document.getElementById('notificationDisplayArea');
+    notificationDisplayArea.innerHTML = '';
+
+    filteredNotifications.sort((a, b) => (!a.read && b.read ? -1 : a.read && !b.read ? 1 : b.timestamp - a.timestamp));
+
+    filteredNotifications.forEach((notification, index) => {
+        const notificationItem = document.createElement('div');
+        notificationItem.className = `alert ${notification.read ? 'alert-secondary' : 'alert-info'}`;
+        notificationItem.innerText = `${notification.message.substring(0, 50)}...`;
+
+        const readMoreLink = document.createElement('a');
+        readMoreLink.href = '#';
+        readMoreLink.innerText = ' Read More';
+        readMoreLink.onclick = function (event) {
+            event.preventDefault();
+            markNotificationAsRead(index);
+            notificationItem.innerText = `${notification.message} (Received at: ${new Date(notification.timestamp).toLocaleString()})`;
+            readMoreLink.remove();
+        };
+
+        notificationItem.appendChild(readMoreLink);
+        notificationDisplayArea.appendChild(notificationItem);
+    });
+    updateNotificationCount();
+}
+
 window.onload = function() {
-    loadNotifications(); // Load notifications from localStorage
-    displayNotifications(); // Display loaded notifications
-    connectWebSocket(); // Connect to WebSocket
+    loadNotifications();
+    displayNotifications();
+    connectWebSocket();
 };
+
 
 // Ensure elements exist before adding event listeners
 document.addEventListener('DOMContentLoaded', () => {
